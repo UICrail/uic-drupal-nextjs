@@ -29,10 +29,13 @@ export function NodeArticle({ article, ...props }: ArticleProps) {
         )}
         <span>{formatDateTimestamp(article.created.timestamp, "en")}</span>
       </div>
-      {article.header?.processed && (
+      {(article.header?.processed || article.header?.value) && (
         <FormattedText
           className="text-md/xl mt-4 sm:text-lg"
-          html={article.header?.processed}
+          html={
+            (article.header?.processed as string) ??
+            (article.header?.value as string)
+          }
         />
       )}
       {article.image && (
@@ -59,10 +62,13 @@ export function NodeArticle({ article, ...props }: ArticleProps) {
           html={article.body?.processed}
         />
       )}
-      {article.footer?.processed && (
+      {(article.footer?.processed || article.footer?.value) && (
         <FormattedText
           className="text-md/xl mt-4 sm:text-lg"
-          html={article.footer?.processed}
+          html={
+            (article.footer?.processed as string) ??
+            (article.footer?.value as string)
+          }
         />
       )}
     </article>
