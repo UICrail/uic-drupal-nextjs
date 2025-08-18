@@ -1,0 +1,21 @@
+uuid: 8ff5ccba-3c86-40cf-9a99-7d25dde23750
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_start_end
+    - node.type.project_page
+  module:
+    - datetime_range
+id: node.project_page.field_start_end
+field_name: field_start_end
+entity_type: node
+bundle: project_page
+label: Start/End
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: daterange

@@ -1,15 +1,17 @@
-uuid: 2b3c4d5e-6f7a-8b9c-0d1e-2f3a4b5c6d7e
+uuid: 935758ea-f11e-4060-9096-ddae46cd8b70
 langcode: en
 status: true
 dependencies:
   module:
     - node
-id: node.field_project_date
-field_name: field_project_date
+id: node.field_spip_id
+field_name: field_spip_id
 entity_type: node
-type: datetime
+type: string
 settings:
-  datetime_type: date
+  max_length: 255
+  case_sensitive: false
+  is_ascii: false
 module: core
 locked: false
 cardinality: 1
