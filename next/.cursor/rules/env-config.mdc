@@ -8,6 +8,12 @@ globs:
 
 # Env & Config
 
+## Language
+
+- Use British English (en-GB) for code comments, documentation, and user-facing content.
+- Maintain consistent spelling across the codebase (e.g. "colour" not "color", "customise" not "customize").
+- For i18n strings, use en-GB as the base translation source.
+
 ## Env Access
 
 - Import `env` from `@/env`; never read `process.env` in app code.
