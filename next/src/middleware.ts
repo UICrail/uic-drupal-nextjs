@@ -72,4 +72,5 @@ export const middleware = (
 
 export const config = {
   matcher: ["/((?!api|_next|.*\\..*).*)"],
+  runtime: "nodejs",
 };

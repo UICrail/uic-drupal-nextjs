@@ -29,8 +29,14 @@ export const FRAGMENT_NODE_ARTICLE = graphql(`
   fragment FragmentNodeArticle on NodeArticle {
     excerpt
     sticky
+    header {
+      ...FragmentText
+    }
     body {
       ...FragmentTextSummary
+    }
+    footer {
+      ...FragmentText
     }
     image {
       ...FragmentImage

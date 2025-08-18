@@ -5,9 +5,15 @@ import { FormattedText } from "@/components/formatted-text";
 import { HeadingPage } from "@/components/heading--page";
 import { formatDateTimestamp } from "@/lib/utils";
 import type { ArticleType } from "@/types/graphql";
+import type { FragmentTextFragment } from "@/lib/gql/graphql";
+
+type ArticleWithHeaderFooter = ArticleType & {
+  header?: FragmentTextFragment;
+  footer?: FragmentTextFragment;
+};
 
 interface ArticleProps {
-  article: ArticleType;
+  article: ArticleWithHeaderFooter;
 }
 
 export function NodeArticle({ article, ...props }: ArticleProps) {
@@ -23,6 +29,12 @@ export function NodeArticle({ article, ...props }: ArticleProps) {
         )}
         <span>{formatDateTimestamp(article.created.timestamp, "en")}</span>
       </div>
+      {article.header?.processed && (
+        <FormattedText
+          className="text-md/xl mt-4 sm:text-lg"
+          html={article.header?.processed}
+        />
+      )}
       {article.image && (
         <figure>
           <Image
@@ -45,6 +57,12 @@ export function NodeArticle({ article, ...props }: ArticleProps) {
         <FormattedText
           className="text-md/xl mt-4 sm:text-lg"
           html={article.body?.processed}
+        />
+      )}
+      {article.footer?.processed && (
+        <FormattedText
+          className="text-md/xl mt-4 sm:text-lg"
+          html={article.footer?.processed}
         />
       )}
     </article>
