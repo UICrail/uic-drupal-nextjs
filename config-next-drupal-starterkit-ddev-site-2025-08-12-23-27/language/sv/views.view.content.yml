@@ -1,0 +1,43 @@
+label: Innehåll
+display:
+  default:
+    display_title: Förvald
+    display_options:
+      title: Innehåll
+      fields:
+        title:
+          label: Titel
+        type:
+          separator: ', '
+        name:
+          label: Författare
+        status:
+          label: Status
+        changed:
+          label: Uppdaterad
+        operations:
+          label: Funktioner
+      exposed_form:
+        options:
+          submit_button: Filtrera
+          reset_button_label: Återställ
+          exposed_sorts_label: 'Sortera efter'
+          sort_asc_label: Stigande
+          sort_desc_label: Fallande
+      filters:
+        title:
+          expose:
+            label: Titel
+        status:
+          expose:
+            label: Status
+        langcode:
+          expose:
+            label: Språk
+  page_1:
+    display_title: Sida
+    display_options:
+      menu:
+        title: Innehåll
+      tab_options:
+        title: Innehåll

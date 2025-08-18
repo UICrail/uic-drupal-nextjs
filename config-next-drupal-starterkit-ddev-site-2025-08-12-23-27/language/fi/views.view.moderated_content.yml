@@ -1,0 +1,40 @@
+display:
+  default:
+    display_title: Oletus
+    display_options:
+      fields:
+        title:
+          label: Otsikko
+          separator: ', '
+        type:
+          separator: ', '
+        name:
+          label: Tekijä
+          separator: ', '
+        moderation_state:
+          separator: ', '
+        changed:
+          label: Päivitetty
+          separator: ', '
+        operations:
+          label: Toimenpiteet
+      pager:
+        options:
+          expose:
+            items_per_page_label: 'Merkintöjä sivua kohti'
+            items_per_page_options_all_label: '- Kaikki -'
+            offset_label: Offset
+      exposed_form:
+        options:
+          submit_button: Suodatus
+          reset_button_label: Palauta
+          exposed_sorts_label: Lajittele
+          sort_asc_label: Asc
+          sort_desc_label: Desc
+      filters:
+        title:
+          expose:
+            label: Otsikko
+        langcode:
+          expose:
+            label: Kieli

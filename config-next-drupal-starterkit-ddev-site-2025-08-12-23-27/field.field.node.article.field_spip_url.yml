@@ -1,0 +1,19 @@
+uuid: da189d7e-e13b-47d0-bdb5-c6f98d37f0ad
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_spip_url
+    - node.type.article
+id: node.article.field_spip_url
+field_name: field_spip_url
+entity_type: node
+bundle: article
+label: 'SPIP url'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

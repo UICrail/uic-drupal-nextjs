@@ -25,6 +25,68 @@ class WunderNextCommands extends DrushCommands {
   const FRONTEND_LOGIN_ROLE = 'frontend_login';
 
   /**
+   * Creates an admin user with administrator role.
+   *
+   * @command wunder_next:create-admin-user
+   * @aliases wnca
+   * @option username The username for the admin user (default: admin)
+   * @option email The email for the admin user (default: admin@example.com)
+   * @option password The password for the admin user (default: admin)
+   */
+  public function createAdminUser($options = ['username' => 'admin', 'email' => 'admin@example.com', 'password' => 'admin']) {
+    $username = $options['username'];
+    $email = $options['email'];
+    $password = $options['password'];
+
+    // Check if user already exists
+    $existing_user = user_load_by_name($username);
+    if ($existing_user) {
+      $this->logger()->warning(dt('User @username already exists.', ['@username' => $username]));
+      return;
+    }
+
+    // Check if email is already in use
+    $existing_email = user_load_by_mail($email);
+    if ($existing_email) {
+      $this->logger()->warning(dt('Email @email is already in use.', ['@email' => $email]));
+      return;
+    }
+
+    // Create the admin user
+    $new_user = [
+      'name' => $username,
+      'pass' => $password,
+      'mail' => $email,
+      'access' => '0',
+      'status' => 1,
+      'roles' => ['administrator'],
+    ];
+
+    $account = User::create($new_user);
+    
+    try {
+      $violations = $account->validate();
+      if ($violations->count() > 0) {
+        foreach ($violations as $violation) {
+          $this->logger()->error($violation->getMessage());
+          return new CommandError(dt('Could not create admin user @username.', ['@username' => $username]));
+        }
+      }
+      $account->save();
+      
+      $this->logger()->success(dt('Admin user @username created successfully with email @email.', [
+        '@username' => $username,
+        '@email' => $email
+      ]));
+      $this->logger()->notice(dt('Password: @password', ['@password' => $password]));
+      $this->logger()->notice(dt('Please change the password after first login for security.'));
+      
+    } catch (EntityStorageException $e) {
+      return new CommandError(dt('Could not create admin user @username.', ['@username' => $username]));
+    }
+  }
+
+  /**
    * Generates users and consumers needed for Next.js to speak to Drupal.
    *
    * @command wunder_next:setup-users-and-consumers

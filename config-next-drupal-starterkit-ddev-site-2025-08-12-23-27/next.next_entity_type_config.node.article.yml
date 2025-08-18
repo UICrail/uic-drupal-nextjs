@@ -1,0 +1,16 @@
+uuid: e1a30c78-de2a-4e5e-b28e-c64a16609e63
+langcode: en
+status: true
+dependencies: {  }
+_core:
+  default_config_hash: HLOiDdETzrW8a7JEQ5qFCgVaPHoPaNWl-BKtqaxBaJI
+id: node.article
+site_resolver: site_selector
+configuration:
+  sites:
+    frontend: frontend
+  field_name: {  }
+revalidator: path
+revalidator_configuration:
+  revalidate_page: true
+  additional_paths: "/\r\n/fi\r\n/en\r\n/sv\r\n/all-articles\r\n/fi/all-articles\r\n/sv/all-articles"

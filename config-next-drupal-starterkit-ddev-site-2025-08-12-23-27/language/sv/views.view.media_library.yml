@@ -1,0 +1,63 @@
+display:
+  default:
+    display_title: Förvald
+    display_options:
+      pager:
+        options:
+          tags:
+            next: ››
+            previous: ‹‹
+          expose:
+            items_per_page_label: 'Inlägg per sida'
+            items_per_page_options_all_label: '- Alla -'
+            offset_label: Kompensera
+      exposed_form:
+        options:
+          reset_button_label: Återställ
+          exposed_sorts_label: 'Sortera efter'
+          sort_asc_label: Stigande
+          sort_desc_label: Fallande
+      filters:
+        name:
+          expose:
+            label: Namn
+        langcode:
+          expose:
+            label: Språk
+  page:
+    display_title: Sida
+    display_options:
+      fields:
+        name:
+          separator: ', '
+        edit_media:
+          text: Redigera
+        delete_media:
+          text: Radera
+  widget:
+    display_options:
+      arguments:
+        bundle:
+          exception:
+            title: Alla
+      filters:
+        name:
+          expose:
+            label: Namn
+  widget_table:
+    display_options:
+      fields:
+        name:
+          label: Namn
+        uid:
+          label: Författare
+        changed:
+          label: Uppdaterad
+      arguments:
+        bundle:
+          exception:
+            title: Alla
+      filters:
+        name:
+          expose:
+            label: Namn

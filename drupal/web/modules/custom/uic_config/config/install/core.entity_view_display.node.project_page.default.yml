@@ -1,0 +1,56 @@
+uuid: 8b9c0d1e-2f3a-4b5c-6d7e-8f9a0b1c2d3e
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.node.project_page.field_project_client
+    - field.field.node.project_page.field_project_date
+    - field.field.node.project_page.field_project_technologies
+    - node.type.project_page
+  module:
+    - text
+id: node.project_page.default
+targetEntityType: node
+bundle: project_page
+mode: default
+content:
+  body:
+    type: text_default
+    weight: 10
+    region: content
+    label: hidden
+    settings: {  }
+    third_party_settings: {  }
+  field_project_client:
+    type: string
+    weight: 7
+    region: content
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+  field_project_date:
+    type: datetime_default
+    weight: 8
+    region: content
+    label: above
+    settings:
+      format_type: medium
+      timezone_override: ''
+    third_party_settings: {  }
+  field_project_technologies:
+    type: string
+    weight: 9
+    region: content
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+  links:
+    weight: 100
+    region: content
+    label: hidden
+    settings: {  }
+    third_party_settings: {  }
+hidden:
+  langcode: true

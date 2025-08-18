@@ -1,0 +1,16 @@
+<?php
+
+/**
+ * @file
+ * Primary module hooks for UIC Configuration module.
+ */
+
+/**
+ * Implements hook_help().
+ */
+function uic_config_help($route_name, \Drupal\Core\Routing\RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    case 'help.page.uic_config':
+      return '<p>' . t('Provides custom content types and configuration for the UIC project.') . '</p>';
+  }
+}

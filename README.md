@@ -96,7 +96,7 @@ lando info
 DDEV has a single container for both the backend and frontend, so the URLs differ only by the port:
 
 | Backend                                  | Frontend                   |
-| ---------------------------------------- |----------------------------|
+| ---------------------------------------- | -------------------------- |
 | https://next-drupal-starterkit.ddev.site | https://frontend.ddev.site |
 
 > NOTE: localhost:3000 does not work in DDEV, you need to use the URL provided by DDEV above.
@@ -105,6 +105,68 @@ You can get a more detailed list of all the services and their urls with the com
 
 ```bash
 ddev describe
+```
+
+## 👤 Creating an Admin User
+
+After setting up the project, you may want to create an admin user to access the Drupal backend. The project includes a custom Drush command to easily create an admin user with administrator privileges.
+
+### Using the Admin User Creation Command
+
+The command is available in both Lando and DDEV environments:
+
+**With Lando:**
+
+```bash
+lando drush wunder_next:create-admin-user
+```
+
+**With DDEV:**
+
+```bash
+ddev drush wunder_next:create-admin-user
+```
+
+### Command Options
+
+You can customise the admin user creation with the following options:
+
+- `--username`: Set the username (default: admin)
+- `--email`: Set the email address (default: admin@example.com)
+- `--password`: Set the password (default: admin)
+
+**Examples:**
+
+Create a custom admin user:
+
+```bash
+lando drush wunder_next:create-admin-user --username=myadmin --email=myadmin@example.com --password=securepassword
+```
+
+Create with DDEV:
+
+```bash
+ddev drush wunder_next:create-admin-user --username=myadmin --email=myadmin@example.com --password=securepassword
+```
+
+### Security Note
+
+⚠️ **Important**: The default password is set to "admin" for convenience during development. Please change the password after first login for security purposes.
+
+### Alternative: Using Drush User Login Link
+
+You can also get a one-time login link for user ID 1 (the default admin user) using:
+
+**With Lando:**
+
+```bash
+lando drush uli
+```
+
+**With DDEV:**
+
+```bash
+ddev drush uli
 ```
 
 ## 📦 What's included?
@@ -185,13 +247,15 @@ Note that when there are changes on the GraphQL server schema itself, you will n
 We have included a `.vscode/extensions.json` file that will suggest some useful extensions to work with GraphQL and TypeScript in VSCode with full autocomplete and syntax highlighting. You can install them by clicking on the notification that appears when you open the project in VSCode.
 
 Please note:
+
 1. We suggest opening the project in VSCode using the `/next` directory as the root of the project.
 
 #### Typesafe environment variables
 
-The environment variables used by the frontend are also checked for type safety. If used correctly, a Zod error will prevent the frontend from building if the environment variables are not set according to the schema defined in `next/env.ts`. 
+The environment variables used by the frontend are also checked for type safety. If used correctly, a Zod error will prevent the frontend from building if the environment variables are not set according to the schema defined in `next/env.ts`.
 
 To add a new environment variable:
+
 1. Add it to `.lando.yml`, under services > node > overrides > environment. or to `.ddev/config.yaml` for DDEV.
 2. Add it to `next/env.ts`. Note that it must be added twice there - once under server/client to define its schema, and once under `runtimeEnv` to read the actual value.
 3. Import it in the file where it's used with `import { env } from "@/env";` and use it like `env.MY_ENV_VAR`. At this point, your environment variable should be working locally.

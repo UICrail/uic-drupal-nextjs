@@ -1,0 +1,44 @@
+display:
+  default:
+    display_title: Oletus
+    display_options:
+      fields:
+        filename:
+          label: Nimi
+          separator: ', '
+        status:
+          label: Tila
+          settings:
+            format_custom_false: Tilapäinen
+      pager:
+        options:
+          expose:
+            items_per_page_label: 'Merkintöjä sivua kohti'
+            items_per_page_options_all_label: '- Kaikki -'
+            offset_label: Offset
+      exposed_form:
+        options:
+          submit_button: Suodatus
+          reset_button_label: Palauta
+          exposed_sorts_label: Lajittele
+          sort_asc_label: Asc
+          sort_desc_label: Desc
+      filters:
+        status:
+          expose:
+            label: Tila
+  page_2:
+    display_options:
+      fields:
+        entity_label:
+          label: Entiteetti
+      pager:
+        options:
+          expose:
+            items_per_page_label: 'Merkintöjä sivua kohti'
+            items_per_page_options_all_label: '- Kaikki -'
+            offset_label: Offset
+      arguments:
+        fid:
+          exception:
+            title: Kaikki

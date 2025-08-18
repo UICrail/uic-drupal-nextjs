@@ -1,0 +1,20 @@
+uuid: 2660ac8e-c581-45e4-8c98-d90940491cf4
+langcode: en
+status: true
+dependencies:
+  config:
+    - rest.resource.user_registration
+  module:
+    - media
+    - rest
+    - system
+_core:
+  default_config_hash: j5zLMOdJBqC0bMvSdth5UebkprJB8g_2FXHqhfpJzow
+id: anonymous
+label: 'Anonymous user'
+weight: 0
+is_admin: false
+permissions:
+  - 'access content'
+  - 'restful post user_registration'
+  - 'view media'
