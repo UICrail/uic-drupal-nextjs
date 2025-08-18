@@ -1,0 +1,36 @@
+---
+description: Drupal + GraphQL usage, structure, and codegen
+globs:
+  - "src/lib/graphql/**/*"
+  - "src/lib/gql/**/*"
+  - "src/lib/drupal/**/*"
+---
+
+# Drupal + GraphQL
+
+## Clients
+
+- Use `drupalClientViewer` by default, `drupalClientPreviewer` for previews/unpublished, and `drupalExternalClientViewer` for external URL needs.
+- Do not hand-roll OAuth; clients manage token acquisition and retries.
+
+## Operations & Fragments
+
+- Place queries and fragments under `src/lib/graphql/`.
+- Reuse shared fragments in `src/lib/graphql/fragments/**`. Avoid duplication.
+- Keep fields minimal and typed; prefer fragments to enforce consistency.
+
+## Codegen
+
+- Generate types and typed documents with `npm run graphql-codegen` (or `npm run dev` to watch).
+- Import from `@/lib/gql` for typed documents and helpers.
+- Do not import `.graphql` files directly in components.
+
+## Requests
+
+- Use `doGraphQlRequest(typedDocument, variables)`; avoid raw `fetch`.
+- Retries are handled via `p-retry` in `drupal-client.ts`. Abort retries on GraphQL domain errors.
+
+## Errors & Logging
+
+- Do not leak detailed errors to the client. Log minimal context server-side.
+- Prefer narrowing by GraphQL error codes when handling known cases.

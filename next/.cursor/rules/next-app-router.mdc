@@ -1,0 +1,48 @@
+---
+description: Next.js 14 App Router patterns and conventions
+globs:
+  - "src/app/**/*"
+  - "src/components/**/*"
+  - "src/middleware.ts"
+---
+
+# Next.js App Router
+
+## Use Server Components by Default
+
+- Prefer server components for pages, layouts, and data fetching.
+- Mark client components with "use client" only when using state, effects, context, event handlers, or browser-only APIs.
+
+## Routing & Structure
+
+- Keep i18n folder structure: `src/app/[locale]/(static|dynamic)/**`.
+- Use `error.tsx` and `not-found.tsx` in route groups for error boundaries.
+- Use `loading.tsx` when needed for suspenseful routes.
+
+## Data Fetching
+
+- Use Drupal clients from `@/lib/drupal/drupal-client` and call `doGraphQlRequest` with typed docs.
+- Avoid `fetch` directly to Drupal unless necessary.
+- Choose revalidation via:
+  - `export const revalidate = REVALIDATE_SHORT | REVALIDATE_LONG;`
+  - Or route handlers with `NextResponse` and cache headers, aligned with constants.
+
+## Metadata & Images
+
+- Use `generateMetadata` or `src/lib/drupal/generate-node-metadata` helpers for SEO.
+- Do not hardcode image domains; they are driven by env and `next.config.mjs` remote patterns.
+
+## Navigation & APIs
+
+- Use `next/navigation` in App Router (not `next/router`).
+- Place API handlers under `src/app/api/**/route.ts` and type inputs/outputs.
+
+## Error Handling
+
+- Fail fast in server code. Prefer throwing and relying on error boundaries.
+- In client code, show `components/status-message` patterns and `sonner` toasts when appropriate.
+
+## Performance
+
+- Keep client JS minimal. Lift data to server where possible.
+- Avoid N+1 requests; combine GraphQL selections and reuse fragments.

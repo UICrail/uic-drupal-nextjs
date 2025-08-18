@@ -1,0 +1,28 @@
+---
+description: Environment variables, Next config, cache, and images
+globs:
+  - "src/env.ts"
+  - "next.config.mjs"
+  - "cache-handler.mjs"
+---
+
+# Env & Config
+
+## Env Access
+
+- Import `env` from `@/env`; never read `process.env` in app code.
+- When introducing a new env var:
+  1. Add to `server` or `client` schema in `src/env.ts` with Zod.
+  2. Map in `runtimeEnv`.
+  3. Use only via `env`.
+
+## Next Config
+
+- Keep `images.remotePatterns` derived from env values; do not hardcode domains.
+- Do not disable type or ESLint checks except via `NEXT_BUILD_SKIP_CHECKS` for CI escapes when needed.
+
+## Cache & Revalidation
+
+- Respect `REVALIDATE_SHORT` and `REVALIDATE_LONG` from `@/lib/constants`.
+- If adjusting cache TTLs, update both `src/lib/constants.ts` and `cache-handler.mjs` (defaultStaleAge) together with clear comments.
+- Preserve defensive Redis connection behavior and timeouts.

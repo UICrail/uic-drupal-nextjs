@@ -1,0 +1,68 @@
+---
+description: Repository-wide quality and architectural rules
+globs:
+  - "**/*"
+alwaysApply: true
+---
+
+## High-Level Principles
+
+- Prefer server components and server-first data fetching. Mark client components only when truly needed with "use client".
+- Use existing domain abstractions before introducing new ones.
+- Keep edits small, type-safe, and testable. Ensure lint, types, and build pass.
+
+## TypeScript
+
+- Explicitly type exported/public APIs and component props. Avoid `any` in new code; use generated GraphQL types and Zod schemas.
+- Use the `@/*` path alias for internal imports. Keep import paths stable.
+
+## Environment & Config
+
+- Never access `process.env` directly in app code. Import `env` from `@/env`.
+- When adding env vars, update `src/env.ts` schemas and `runtimeEnv` and then use `env`.
+- Do not expose server-only envs to the client.
+
+## Data & Drupal
+
+- Use clients from `@/lib/drupal/drupal-client` (`drupalClientViewer`, `drupalClientPreviewer`, `drupalExternalClientViewer`).
+- Prefer `doGraphQlRequest` with typed documents. Avoid raw `fetch` to Drupal unless justified.
+- Place GraphQL operations in `src/lib/graphql/**`. Import typed docs from `@/lib/gql`.
+
+## Caching & Revalidation
+
+- Use `REVALIDATE_SHORT` and `REVALIDATE_LONG` from `@/lib/constants`. Do not hardcode durations.
+- Keep `cache-handler.mjs` TTL behavior aligned with constants.
+
+## Formatting & Imports
+
+- Obey Prettier (with Tailwind plugin) and ESLint. Do not disable globally.
+- Use simple-import-sort groups used in this repo; keep `next/react` first, then packages, then internal `@/`, then relatives.
+
+## UI, Tailwind, Accessibility
+
+- Reuse primitives from `src/components/ui/*` and composition patterns in `src/components/*`.
+- Use Tailwind tokens and CSS variables configured in `tailwind.config.js`. Do not hardcode color values.
+- Ensure accessible semantics and keyboard navigation for interactive components.
+
+## i18n
+
+- Keep the route structure under `src/app/[locale]/...` intact. Use `next-intl` helpers in `src/i18n`.
+- Avoid hardcoded user-facing strings in components that need translation.
+
+## Testing & Storybook
+
+- For UI changes that affect the design system, add/adjust stories in `src/stories/*` and verify Storybook.
+- For end-to-end flows, add/update Cypress tests and prefer stable `data-testid` selectors.
+
+## Security
+
+- Validate untrusted inputs with Zod (`src/lib/zod/*`).
+- Never log secrets or tokens. Avoid leaking stack traces to the client.
+
+## Quality Gate (run before finalizing)
+
+- Lint: `npm run lint`
+- Codegen: `npm run graphql-codegen`
+- Build (types): `npm run build`
+- Storybook (if UI library changed): `npm run build-storybook`
+- E2E (if flows changed): `npm run cypress:run`
