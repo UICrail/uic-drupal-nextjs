@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { HTMLAttributes } from "react";
+import { getLocale } from "next-intl/server";
 import parse, {
   DOMNode,
   domToReact,
@@ -11,6 +12,32 @@ import parse, {
 import { isRelative } from "@/lib/utils";
 
 import { env } from "@/env";
+import { Media } from "@/components/media";
+import { drupalClientViewer } from "@/lib/drupal/drupal-client";
+import { GET_MEDIA_BY_ID } from "@/lib/graphql/queries";
+import type { FragmentMediaUnionFragment } from "@/lib/gql/graphql";
+
+async function DrupalMediaEmbed({
+  uuid,
+  align,
+}: {
+  uuid: string;
+  align?: string;
+}) {
+  const langcode = await getLocale();
+  const data = await drupalClientViewer.doGraphQlRequest(GET_MEDIA_BY_ID, {
+    id: uuid,
+    langcode,
+  });
+  const media = data?.media as FragmentMediaUnionFragment | null;
+  if (!media) return null;
+  const wrapperClassName = align ? `text-${align}` : undefined;
+  return (
+    <div className={wrapperClassName}>
+      <Media media={media} />
+    </div>
+  );
+}
 
 const isElement = (domNode: DOMNode): domNode is Element =>
   domNode instanceof Element;
@@ -45,6 +72,19 @@ const options: HTMLReactParserOptions = {
         break;
       }
 
+      case "drupal-media": {
+        const {
+          ["data-entity-type"]: entityType,
+          ["data-entity-uuid"]: entityUuid,
+          ["data-align"]: align,
+        } = domNode.attribs ?? {};
+
+        if (entityType === "media" && entityUuid) {
+          return <DrupalMediaEmbed uuid={entityUuid} align={align} />;
+        }
+        return null;
+      }
+
       case "a": {
         const { href } = domNode.attribs;
 
@@ -59,6 +99,18 @@ const options: HTMLReactParserOptions = {
       }
 
       case "p": {
+        const hasDrupalMediaChild = (domNode.children || []).some(
+          (child) => isElement(child) && child.name === "drupal-media",
+        );
+
+        if (hasDrupalMediaChild) {
+          return (
+            <div className="mb-2 text-muted-foreground">
+              {domToReact(domNode.children as DOMNode[], options)}
+            </div>
+          );
+        }
+
         return (
           <p className="mb-2 text-muted-foreground">
             {domToReact(domNode.children as DOMNode[], options)}

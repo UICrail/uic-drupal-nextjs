@@ -189,3 +189,13 @@ export const LISTING_ARTICLES = graphql(`
     }
   }
 `);
+
+// Load a Media entity by ID (UUID). Reuses the shared media union fragment so
+// the frontend can render any supported media type.
+export const GET_MEDIA_BY_ID = graphql(`
+  query getMediaById($id: ID!, $langcode: String) {
+    media(id: $id, langcode: $langcode) {
+      ...FragmentMediaUnion
+    }
+  }
+`);

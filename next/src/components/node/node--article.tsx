@@ -1,5 +1,7 @@
 import Image from "next/image";
 import { useTranslations } from "next-intl";
+import { GalleryImageDialog } from "@/components/media/gallery-image-dialog";
+import { MediaDocument } from "@/components/media/media--document";
 
 import { FormattedText } from "@/components/formatted-text";
 import { HeadingPage } from "@/components/heading--page";
@@ -70,6 +72,34 @@ export function NodeArticle({ article, ...props }: ArticleProps) {
             (article.footer?.value as string)
           }
         />
+      )}
+      {Array.isArray(article.gallery) && article.gallery.length > 0 && (
+        <section className="mt-6">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+            {article.gallery.map((media) => (
+              <div key={media.id} className="w-full">
+                <GalleryImageDialog media={media} />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+      {Array.isArray(article.attachments) && article.attachments.length > 0 && (
+        <section className="mt-6">
+          <ul className="list-inside space-y-2" aria-label="attachments">
+            {article.attachments.map((doc) => (
+              <li key={doc.id} className="w-full">
+                <a
+                  href={doc.mediaDocumentFile.url}
+                  className="group flex items-center rounded border border-transparent p-2 transition-all hover:border-border hover:bg-accent"
+                  download
+                >
+                  <MediaDocument media={doc} />
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
     </article>
   );

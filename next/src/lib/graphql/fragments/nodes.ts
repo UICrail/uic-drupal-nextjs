@@ -38,6 +38,12 @@ export const FRAGMENT_NODE_ARTICLE = graphql(`
     footer {
       ...FragmentText
     }
+    gallery {
+      ...FragmentMediaImage
+    }
+    attachments {
+      ...FragmentMediaDocument
+    }
     image {
       ...FragmentImage
     }
