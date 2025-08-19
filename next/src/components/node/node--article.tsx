@@ -47,7 +47,22 @@ export function NodeArticle({ article, ...props }: ArticleProps) {
             width={article.image.width}
             height={article.image.height}
             style={{ width: 768, height: 480 }}
-            alt={article.image.alt}
+            alt={
+              (typeof article.image.alt === "string" && article.image.alt) ||
+              (typeof article.image.title === "string" &&
+                article.image.title) ||
+              (() => {
+                try {
+                  const pathname = new URL(article.image.url, "http://dummy")
+                    .pathname;
+                  return decodeURIComponent(
+                    pathname.split("/").pop() || "Image",
+                  );
+                } catch {
+                  return "Image";
+                }
+              })()
+            }
             className="object-cover"
             priority
           />

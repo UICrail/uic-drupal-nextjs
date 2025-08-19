@@ -2,8 +2,6 @@
 
 echo "=== Nettoyage complet et réinstallation du module ==="
 
-cd /home/ziwam/uic-drupal-nexjs/drupal
-
 echo ""
 echo "1. Suppression de toutes les configurations en conflit..."
 ddev drush config:delete migrate_plus.migration.spip_enews_articles

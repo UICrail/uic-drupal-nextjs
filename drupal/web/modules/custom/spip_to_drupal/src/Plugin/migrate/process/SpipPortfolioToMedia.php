@@ -66,6 +66,27 @@ class SpipPortfolioToMedia extends ProcessPluginBase {
     }
 
     $targets = [];
+    // Get any media IDs already embedded in texte/chapo/ps to avoid duplicates,
+    // and also detect inline <docX>/<imgX> in texte/chapo/ps to dedupe by doc id.
+    $embedded_ids = [];
+    $embedded_doc_ids = [];
+    try {
+      $tmp = $row->getTemporaryProperty('spip_embedded_media_ids');
+      if (is_array($tmp)) { $embedded_ids = array_map('intval', $tmp); }
+    } catch (\Throwable $e) {}
+    try {
+      $inline_fields = [];
+      foreach (['texte', 'chapo', 'ps'] as $src_field) {
+        $val = $row->getSourceProperty($src_field);
+        if (is_string($val) && $val !== '') { $inline_fields[] = $val; }
+      }
+      if (!empty($inline_fields)) {
+        $joined = implode("\n", $inline_fields);
+        if (preg_match_all('/<(?:doc|img)(\d+)/i', $joined, $m)) {
+          $embedded_doc_ids = array_unique($m[1]);
+        }
+      }
+    } catch (\Throwable $e) {}
     foreach ($doc_ids as $doc_id) {
       $url = '';
       if (isset(self::$documentUrlMap[$doc_id])) {
@@ -88,7 +109,13 @@ class SpipPortfolioToMedia extends ProcessPluginBase {
 
       $media = $this->ensureMediaForRemoteUrl($url, $destination_scheme, $destination_subdir, $media_bundle, $media_file_field, $reuse_existing);
       if ($media) {
-        $targets[] = ['target_id' => (int) $media->id()];
+        $mid = (int) $media->id();
+        $skip_by_doc = !empty($embedded_doc_ids) && in_array((string) $doc_id, $embedded_doc_ids, true);
+        if ($mid > 0 && !in_array($mid, $embedded_ids, true) && !$skip_by_doc) {
+          $targets[] = ['target_id' => $mid];
+        } else {
+          \Drupal::logger('spip_to_drupal')->info('Portfolio dedup: skipping media @mid (inline doc or already embedded).', ['@mid' => $mid]);
+        }
       }
     }
 

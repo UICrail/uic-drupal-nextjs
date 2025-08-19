@@ -11,7 +11,9 @@ const token = fs.readFileSync(tokenFilePath, "utf8").trim();
 
 loadEnvConfig(process.cwd());
 
-const schemaUrl = `${process.env.NEXT_PUBLIC_DRUPAL_BASE_URL}/graphql`;
+// Prefer internal Drupal base URL for schema introspection during codegen to
+// ensure we hit the same GraphQL Compose schema used by server-side fetches.
+const schemaUrl = `${process.env.DRUPAL_BASE_URL_INTERNAL || process.env.NEXT_PUBLIC_DRUPAL_BASE_URL}/graphql`;
 
 const config: CodegenConfig = {
   schema: [

@@ -116,10 +116,10 @@ process:
     - plugin: skip_on_empty
       source: logourl
       method: process
-    - plugin: log_value
-      message: 'Image pipeline: logourl present, setting ALT from titre'
-    - plugin: get
-      source: titre
+    - plugin: callback
+      callable: pathinfo
+      arguments:
+        - 8
 
   # Tags - split by semicolon and create/reference taxonomy terms
   field_tags:
