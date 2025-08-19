@@ -18,3 +18,4 @@ dependencies:
   - drupal:filter
   - drupal:image
   - drupal:taxonomy
+  - graphql_compose:graphql_compose

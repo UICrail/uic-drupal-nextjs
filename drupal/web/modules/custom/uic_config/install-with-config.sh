@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# UIC Configuration Module Installation Script
-# This script installs the UIC Configuration module safely
+# UIC Configuration Module Installation with Config Files
+# This script installs the module and then applies the configuration files
 
 set -e
 
-echo "🚀 Installing UIC Configuration module..."
+echo "🚀 Installing UIC Configuration module with configuration files..."
 
 # Colors for output
 RED='\033[0;31m'
@@ -58,41 +58,8 @@ if [ -n "$MODULE_STATUS" ]; then
     fi
 fi
 
-# Step 2: Check for existing custom fields
-echo "🔍 Step 2: Checking for existing custom fields..."
-EXISTING_FIELDS=()
-
-# Check for article custom fields
-CUSTOM_FIELDS=(
-    "field_subtitle"
-    "field_header"
-    "field_footer"
-    "field_gallery"
-    "field_attachments"
-    "field_spip_id"
-    "field_spip_url"
-)
-
-for field in "${CUSTOM_FIELDS[@]}"; do
-    if $DRUSH_CMD field:info "node.article.$field" &> /dev/null; then
-        EXISTING_FIELDS+=("$field")
-    fi
-done
-
-if [ ${#EXISTING_FIELDS[@]} -gt 0 ]; then
-    print_warning "Found existing custom fields: ${EXISTING_FIELDS[*]}"
-    print_info "The module will configure these fields but won't recreate them"
-fi
-
-# Step 3: Check for project_page content type
-echo "📄 Step 3: Checking for project_page content type..."
-if $DRUSH_CMD config:get node.type.project_page &> /dev/null; then
-    print_warning "Project Page content type already exists"
-    print_info "The module will configure it but won't recreate it"
-fi
-
-# Step 4: Install the module
-echo "📦 Step 4: Installing UIC Configuration module..."
+# Step 2: Install the module first
+echo "📦 Step 2: Installing UIC Configuration module..."
 $DRUSH_CMD pm:install uic_config -y
 
 if [ $? -eq 0 ]; then
@@ -101,6 +68,51 @@ else
     print_error "Module installation failed"
     exit 1
 fi
+
+# Step 3: Import configuration files from optional directory
+echo "📁 Step 3: Importing configuration files..."
+CONFIG_DIR="config/optional"
+
+if [ -d "$CONFIG_DIR" ]; then
+    # Import field storage configurations first
+    print_info "Importing field storage configurations..."
+    for config_file in "$CONFIG_DIR"/field.storage.*.yml; do
+        if [ -f "$config_file" ]; then
+            config_name=$(basename "$config_file" .yml)
+            print_info "Importing $config_name..."
+            $DRUSH_CMD config:import:single --source="$config_file" -y
+        fi
+    done
+
+    # Import content type configuration
+    print_info "Importing content type configuration..."
+    for config_file in "$CONFIG_DIR"/node.type.*.yml; do
+        if [ -f "$config_file" ]; then
+            config_name=$(basename "$config_file" .yml)
+            print_info "Importing $config_name..."
+            $DRUSH_CMD config:import:single --source="$config_file" -y
+        fi
+    done
+
+    # Import field configurations
+    print_info "Importing field configurations..."
+    for config_file in "$CONFIG_DIR"/field.field.*.yml; do
+        if [ -f "$config_file" ]; then
+            config_name=$(basename "$config_file" .yml)
+            print_info "Importing $config_name..."
+            $DRUSH_CMD config:import:single --source="$config_file" -y
+        fi
+    done
+
+    print_status "Configuration files imported successfully!"
+else
+    print_warning "Configuration directory not found, skipping config import"
+fi
+
+# Step 4: Clear caches
+echo "🧹 Step 4: Clearing caches..."
+$DRUSH_CMD cr
+print_status "Caches cleared"
 
 # Step 5: Verify installation
 echo "🔍 Step 5: Verifying installation..."
@@ -115,6 +127,16 @@ else
 fi
 
 # Check if custom fields are configured
+CUSTOM_FIELDS=(
+    "field_subtitle"
+    "field_header"
+    "field_footer"
+    "field_gallery"
+    "field_attachments"
+    "field_spip_id"
+    "field_spip_url"
+)
+
 for field in "${CUSTOM_FIELDS[@]}"; do
     if $DRUSH_CMD field:info "node.article.$field" &> /dev/null; then
         print_status "Field $field is configured"
@@ -137,17 +159,13 @@ else
     print_warning "GraphQL configuration may not be complete"
 fi
 
-# Step 6: Clear caches
-echo "🧹 Step 6: Clearing caches..."
-$DRUSH_CMD cr
-print_status "Caches cleared"
-
 if [ "$VERIFICATION_PASSED" = true ]; then
     echo ""
     print_status "🎉 UIC Configuration module installation completed successfully!"
     echo ""
     echo "📋 Summary:"
     echo "  - Module installed and enabled"
+    echo "  - Configuration files imported"
     echo "  - Custom fields configured for Article content type"
     echo "  - Project Page content type configured"
     echo "  - GraphQL exposure configured"

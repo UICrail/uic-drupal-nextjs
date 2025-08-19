@@ -169,6 +169,25 @@ lando drush uli
 ddev drush uli
 ```
 
+## UIC project setup (post‑install)
+
+After the initial setup, apply the UIC‑specific steps below.
+
+1. Create an administrator user (DDEV):
+
+```bash
+ddev drush wunder_next:create-admin-user --username=webmaster@uic.org --email=webmaster@uic.org --password=1922
+```
+
+2. Enable required modules (DDEV):
+
+```bash
+ddev drush en uic_config spip_to_drupal -y
+ddev drush cr
+```
+
+Note: If you are using Lando, replace `ddev` with `lando` in the commands above.
+
 ## 📦 What's included?
 
 We try to add to the template what we think are the most commonly requested features in website projects. Most of these are based on the features provided by [Next.js for Drupal](https://next-drupal.org/), but we have paid special attention to making these work in a multilanguage setup.

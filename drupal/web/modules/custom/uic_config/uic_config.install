@@ -1,0 +1,240 @@
+<?php
+
+use Drupal\field\Entity\FieldConfig;
+use Drupal\field\Entity\FieldStorageConfig;
+use Drupal\node\Entity\NodeType;
+
+/**
+ * Implements hook_install().
+ */
+function uic_config_install(): void {
+  // Ensure required content type exists only if truly needed elsewhere.
+  // This module's primary responsibility is to add custom fields to Article.
+  _uic_config_create_article_fields();
+  _uic_config_configure_article_displays();
+  _uic_config_configure_graphql_compose();
+}
+
+/**
+ * Create field storage if missing.
+ */
+function _uic_config_ensure_field_storage(string $entityType, string $fieldName, string $type, array $storageSettings = [], int $cardinality = 1): void {
+  $existing = FieldStorageConfig::loadByName($entityType, $fieldName);
+  if ($existing) {
+    return;
+  }
+
+  FieldStorageConfig::create([
+    'field_name' => $fieldName,
+    'entity_type' => $entityType,
+    'type' => $type,
+    'settings' => $storageSettings,
+    'cardinality' => $cardinality,
+    'translatable' => TRUE,
+  ])->save();
+}
+
+/**
+ * Create field instance if missing.
+ */
+function _uic_config_ensure_field_instance(string $entityType, string $bundle, string $fieldName, string $label, array $fieldSettings = [], array $widget = []): void {
+  $existing = FieldConfig::loadByName($entityType, $bundle, $fieldName);
+  if ($existing) {
+    return;
+  }
+
+  FieldConfig::create([
+    'field_name' => $fieldName,
+    'entity_type' => $entityType,
+    'bundle' => $bundle,
+    'label' => $label,
+    'settings' => $fieldSettings,
+  ])->save();
+}
+
+/**
+ * Create all Article fields in an idempotent way.
+ */
+function _uic_config_create_article_fields(): void {
+  $entityType = 'node';
+  $bundle = 'article';
+
+  // Ensure the core Article content type exists (it does in this distro).
+  if (!NodeType::load($bundle)) {
+    // If Article is missing, do nothing; site may not use it.
+    return;
+  }
+
+  // field_subtitle (string)
+  _uic_config_ensure_field_storage($entityType, 'field_subtitle', 'string', ['max_length' => 255], 1);
+  _uic_config_ensure_field_instance($entityType, $bundle, 'field_subtitle', 'Subtitle');
+
+  // field_header (text_long)
+  _uic_config_ensure_field_storage($entityType, 'field_header', 'text_long', [], 1);
+  _uic_config_ensure_field_instance($entityType, $bundle, 'field_header', 'Header');
+
+  // field_footer (text_long)
+  _uic_config_ensure_field_storage($entityType, 'field_footer', 'text_long', [], 1);
+  _uic_config_ensure_field_instance($entityType, $bundle, 'field_footer', 'Footer');
+
+  // field_gallery (media reference, multiple)
+  _uic_config_ensure_field_storage(
+    $entityType,
+    'field_gallery',
+    'entity_reference',
+    [
+      'target_type' => 'media',
+    ],
+    -1
+  );
+  _uic_config_ensure_field_instance(
+    $entityType,
+    $bundle,
+    'field_gallery',
+    'Gallery',
+    [
+      'handler' => 'default:media',
+      'handler_settings' => [
+        // Allow all media types by default; can be restricted in UI later.
+        'target_bundles' => NULL,
+      ],
+    ]
+  );
+
+  // field_attachments (media reference, multiple)
+  _uic_config_ensure_field_storage(
+    $entityType,
+    'field_attachments',
+    'entity_reference',
+    [
+      'target_type' => 'media',
+    ],
+    -1
+  );
+  _uic_config_ensure_field_instance(
+    $entityType,
+    $bundle,
+    'field_attachments',
+    'Attachments',
+    [
+      'handler' => 'default:media',
+      'handler_settings' => [
+        'target_bundles' => NULL,
+      ],
+    ]
+  );
+
+  // field_spip_id (string)
+  _uic_config_ensure_field_storage($entityType, 'field_spip_id', 'string', ['max_length' => 255], 1);
+  _uic_config_ensure_field_instance($entityType, $bundle, 'field_spip_id', 'SPIP ID');
+
+  // field_spip_url (string)
+  _uic_config_ensure_field_storage($entityType, 'field_spip_url', 'string', ['max_length' => 2048], 1);
+  _uic_config_ensure_field_instance($entityType, $bundle, 'field_spip_url', 'SPIP URL');
+}
+
+/**
+ * Configure Article form and view displays (non-destructive).
+ */
+function _uic_config_configure_article_displays(): void {
+  $formDisplay = \Drupal::entityTypeManager()
+    ->getStorage('entity_form_display')
+    ->load('node.article.default');
+
+  if ($formDisplay) {
+    $components = [
+      'field_subtitle' => ['type' => 'string_textfield', 'weight' => 7, 'settings' => ['size' => 60, 'placeholder' => '']],
+      'field_header' => ['type' => 'text_textarea', 'weight' => 9, 'settings' => ['rows' => 5, 'placeholder' => '']],
+      'field_footer' => ['type' => 'text_textarea', 'weight' => 12, 'settings' => ['rows' => 5, 'placeholder' => '']],
+      'field_gallery' => ['type' => 'media_library_widget', 'weight' => 13, 'settings' => ['media_types' => []]],
+      'field_attachments' => ['type' => 'media_library_widget', 'weight' => 14, 'settings' => ['media_types' => []]],
+      'field_spip_id' => ['type' => 'string_textfield', 'weight' => 15, 'settings' => ['size' => 60, 'placeholder' => '']],
+      'field_spip_url' => ['type' => 'string_textfield', 'weight' => 16, 'settings' => ['size' => 60, 'placeholder' => '']],
+    ];
+
+    $changed = FALSE;
+    foreach ($components as $name => $definition) {
+      if ($formDisplay->getComponent($name) === NULL) {
+        $formDisplay->setComponent($name, $definition);
+        $changed = TRUE;
+      }
+    }
+    if ($changed) {
+      $formDisplay->save();
+    }
+  }
+
+  $viewDisplay = \Drupal::entityTypeManager()
+    ->getStorage('entity_view_display')
+    ->load('node.article.default');
+
+  if ($viewDisplay) {
+    // Hide by default; site can enable where needed.
+    $hide = [
+      'field_subtitle',
+      'field_header',
+      'field_footer',
+      'field_gallery',
+      'field_attachments',
+      'field_spip_id',
+      'field_spip_url',
+    ];
+
+    $changed = FALSE;
+    foreach ($hide as $name) {
+      if ($viewDisplay->getComponent($name) !== NULL) {
+        $viewDisplay->removeComponent($name);
+        $changed = TRUE;
+      }
+    }
+    if ($changed) {
+      $viewDisplay->save();
+    }
+  }
+}
+
+/**
+ * Configure GraphQL Compose to expose custom fields (non-destructive).
+ */
+function _uic_config_configure_graphql_compose(): void {
+  if (!\Drupal::moduleHandler()->moduleExists('graphql_compose')) {
+    return;
+  }
+
+  $config = \Drupal::configFactory()->getEditable('graphql_compose.settings');
+  $entityConfig = $config->get('entity_config') ?: [];
+  $fieldConfig = $config->get('field_config') ?: [];
+
+  $entityConfig['node'] = $entityConfig['node'] ?? [];
+  $entityConfig['node']['article'] = $entityConfig['node']['article'] ?? [
+    'enabled' => TRUE,
+    'query_load_enabled' => TRUE,
+    'edges_enabled' => TRUE,
+    'routes_enabled' => TRUE,
+  ];
+
+  $fieldConfig['node'] = $fieldConfig['node'] ?? [];
+  $fieldConfig['node']['article'] = $fieldConfig['node']['article'] ?? [];
+
+  foreach ([
+    'field_subtitle',
+    'field_header',
+    'field_footer',
+    'field_gallery',
+    'field_attachments',
+    'field_spip_id',
+    'field_spip_url',
+  ] as $name) {
+    if (!isset($fieldConfig['node']['article'][$name])) {
+      $fieldConfig['node']['article'][$name] = ['enabled' => TRUE];
+    }
+  }
+
+  $config->set('entity_config', $entityConfig);
+  $config->set('field_config', $fieldConfig);
+  $config->save();
+
+  \Drupal::service('cache_tags.invalidator')->invalidateTags(['graphql_compose_schema']);
+}
+
+
