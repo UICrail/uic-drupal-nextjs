@@ -1,0 +1,24 @@
+uuid: 74db0b6d-8645-45aa-8d4f-4e099b6263c1
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_footer
+    - filter.format.full_html
+    - node.type.project_page
+  module:
+    - text
+id: node.project_page.field_footer
+field_name: field_footer
+entity_type: node
+bundle: project_page
+label: Footer
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  allowed_formats:
+    - full_html
+field_type: text_long

@@ -1,0 +1,17 @@
+spip_to_drupal.admin:
+  path: '/admin/content/spip-migration'
+  defaults:
+    _controller: '\Drupal\spip_to_drupal\Controller\SpipMigrationController::adminPage'
+    _title: 'SPIP Migration'
+  requirements:
+    _permission: 'administer migrations'
+
+spip_to_drupal.statistics:
+  path: '/admin/content/spip-migration/statistics'
+  defaults:
+    _controller: '\Drupal\spip_to_drupal\Controller\SpipMigrationController::statisticsPage'
+    _title: 'SPIP Migration Statistics'
+  requirements:
+    _permission: 'administer migrations'
+
+

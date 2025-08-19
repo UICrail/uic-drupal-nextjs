@@ -1,0 +1,4 @@
+services:
+  spip_to_drupal.batch_migration:
+    class: Drupal\spip_to_drupal\SpipBatchMigrationService
+    arguments: ['@plugin.manager.migration', '@logger.factory']

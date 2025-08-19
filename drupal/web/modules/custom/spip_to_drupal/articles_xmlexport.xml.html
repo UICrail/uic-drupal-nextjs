@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+  <!DOCTYPE articles>
+	<rubriques xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <BOUCLE_rub(RUBRIQUES){id_secteur IN  145, 13, 157, 30, 42, 26, 48, 22, 8, 5} {tout} {par id_rubrique}>[(#REM) 145, 13, 157, 30, 42, 26, 48, 22, 8, 5]
+#SET{rubrique_id,#ID_RUBRIQUE}
+		<BOUCLE_content(ARTICLES){id_rubrique}>
+            <rubrique xml:id="art#ID_ARTICLE">
+                <id>art#ID_ARTICLE</id>
+                <parentid>[rub(#GET{rubrique_id})]</parentid>
+				<auteurs><BOUCLE_auteurs(AUTEURS){id_article}>[(#EMAIL|extraire_email)];</BOUCLE_auteurs></auteurs>
+						<logo>[(#LOGO_ARTICLE|oui)logo#ID_ARTICLE]</logo>
+						<surtitre>#SURTITRE</surtitre>
+						<titre>#TITRE</titre>
+						<soustitre>#SOUSTITRE</soustitre>
+						<pub>#DATE</pub>
+						<chapo>#CHAPO</chapo>
+						<texte><![CDATA[[(#TEXTE*
+						|modif_doc
+						|propre
+						|liens_absolus
+						|replace{<ul class="spip">,<ul>}
+						|replace{<h2 class="spip">,<h2>}
+						|replace{<h3 class="spip">,<h3>}
+						|replace{<li> ,<li>}
+						|replace{<br /><img src="squelettes-dist/puce.gif" width="8" height="11" class="puce" alt="-" />&nbsp;,<li>}
+						|replace{<p><img src="squelettes-dist/puce.gif" width="8" height="11" class="puce" alt="-" />&nbsp;,<li>})]]]></texte>						
+						<themes><BOUCLE_keywords(MOTS) {id_article}{id_groupe=1}>[(#ID_MOT);]</BOUCLE_keywords></themes>
+						<ps><![CDATA[[(#PS*|modif_doc|propre|liens_absolus)]]]></ps>
+						<note>#NOTES</note>
+		  <visits>#VISITES</visits>
+						<portfolio><BOUCLE_docs(DOCUMENTS){id_article}{mode=document}{doublons}>doc#ID_DOCUMENT;</BOUCLE_docs></portfolio>
+				</rubrique>
+				</BOUCLE_content>
+ </BOUCLE_rub>
+ </rubriques>

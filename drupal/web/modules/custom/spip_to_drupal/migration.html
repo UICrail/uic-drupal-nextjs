@@ -1,0 +1,69 @@
+<articles>
+    <BOUCLE_articles(ARTICLES) {statut=publie} {par date} {inverse}>
+        <article>
+            <id>#ID_ARTICLE</id>
+            <titre>
+                <![CDATA[#TITRE]]>
+            </titre>
+            <date>#DATE</date>
+            <statut>#STATUT</statut>
+
+            <!-- Texte brut avec raccourcis préservés -->
+            <texte_brut>
+                <![CDATA[#TEXTE]]>
+            </texte_brut>
+            <chapo_brut>
+                <![CDATA[#CHAPO]]>
+            </chapo_brut>
+            <ps_brut>
+                <![CDATA[#PS]]>
+            </ps_brut>
+            <descriptif_brut>
+                <![CDATA[#DESCRIPTIF]]>
+            </descriptif_brut>
+
+            <!-- Version transformée pour comparaison/fallback -->
+            <texte_html>
+                <![CDATA[(#TEXTE|propre)]]>
+            </texte_html>
+
+            <!-- Métadonnées utiles -->
+            <auteur>#LESAUTEURS</auteur>
+            <rubrique>#ID_RUBRIQUE</rubrique>
+
+            <!-- Documents attachés explicitement -->
+            <documents_joints>
+                <BOUCLE_docs_joints(DOCUMENTS) {id_article} {mode=document}>
+                    <document>
+                        <id_document>#ID_DOCUMENT</id_document>
+                        <fichier>#FICHIER</fichier>
+                        <titre>
+                            <![CDATA[#TITRE]]>
+                        </titre>
+                        <descriptif>
+                            <![CDATA[#DESCRIPTIF]]>
+                        </descriptif>
+                        <extension>#EXTENSION</extension>
+                    </document>
+                    </BOUCLE_docs_joints>
+            </documents_joints>
+
+            <!-- Images jointes explicitement -->
+            <images_jointes>
+                <BOUCLE_imgs_jointes(DOCUMENTS) {id_article} {mode=image}>
+                    <image>
+                        <id_document>#ID_DOCUMENT</id_document>
+                        <fichier>#FICHIER</fichier>
+                        <titre>
+                            <![CDATA[#TITRE]]>
+                        </titre>
+                        <descriptif>
+                            <![CDATA[#DESCRIPTIF]]>
+                        </descriptif>
+                        <extension>#EXTENSION</extension>
+                    </image>
+                    </BOUCLE_imgs_jointes>
+            </images_jointes>
+        </article>
+        </BOUCLE_articles>
+</articles>

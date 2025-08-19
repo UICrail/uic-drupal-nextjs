@@ -1,0 +1,9 @@
+name: 'SPIP to Drupal Migration'
+type: module
+description: 'Handles migration of content from SPIP to Drupal including eNews articles, pages, and other content types'
+core_version_requirement: ^9 || ^10
+package: Migration
+dependencies:
+  - drupal:migrate
+  - migrate_plus:migrate_plus
+  - migrate_tools:migrate_tools

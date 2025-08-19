@@ -1,0 +1,157 @@
+id: spip_project_pages_local
+label: '[SPIP] Project Pages Import (Local file)'
+migration_group: spip_import
+source:
+  plugin: spip_xml_file
+  file_path: 'public://feeds/project_pages.xml'
+  item_selector: '//*[local-name()="rubrique"]'
+  auto_paginate: false
+
+process:
+  # Node type
+  type:
+    plugin: default_value
+    default_value: article
+
+  # Language
+  langcode:
+    plugin: default_value
+    default_value: en
+
+  # Title (required field)
+  title: titre
+
+  # Body field with format
+  body/value:
+    - plugin: spip_raccourcis_to_html
+      source: texte
+      base_url: 'https://uic.org/com/'
+    - plugin: spip_doc_to_embed
+      base_url: 'https://uic.org/com/'
+      doc_path_pattern: 'IMG'
+      documents_index_url: 'https://uic.org/com/?page=documents_exportxml'
+      documents_id_param: 'id_document'
+    - plugin: spip_html_transform
+    - plugin: spip_html_media_embed
+      base_url: 'https://uic.org/com/'
+      destination_scheme: 'public://'
+      destination_subdir: 'spip/images'
+      reuse_existing: true
+      use_media: true
+      media_bundle: 'image'
+      media_image_field: 'field_media_image'
+      strip_width_height: true
+  body/format:
+    plugin: default_value
+    default_value: full_html
+
+  # SPIP URL field
+  field_spip_url: formerurl
+
+  # Subtitle field
+  field_subtitle: soustitre
+
+  # Header field (chapo)
+  field_header/value:
+    - plugin: spip_raccourcis_to_html
+      source: chapo
+      base_url: 'https://uic.org/com/'
+    - plugin: spip_doc_to_embed
+      base_url: 'https://uic.org/com/'
+      doc_path_pattern: 'IMG'
+      documents_index_url: 'https://uic.org/com/?page=documents_exportxml'
+      documents_id_param: 'id_document'
+    - plugin: spip_html_transform
+    - plugin: spip_html_media_embed
+      base_url: 'https://uic.org/com/'
+      reuse_existing: true
+      use_media: true
+  field_header/format:
+    plugin: default_value
+    default_value: full_html
+
+  # Footer field (ps)
+  field_footer/value:
+    - plugin: spip_raccourcis_to_html
+      source: ps
+      base_url: 'https://uic.org/com/'
+    - plugin: spip_doc_to_embed
+      base_url: 'https://uic.org/com/'
+      doc_path_pattern: 'IMG'
+      documents_index_url: 'https://uic.org/com/?page=documents_exportxml'
+      documents_id_param: 'id_document'
+    - plugin: spip_html_transform
+    - plugin: spip_html_media_embed
+      base_url: 'https://uic.org/com/'
+      reuse_existing: true
+      use_media: true
+  field_footer/format:
+    plugin: default_value
+    default_value: full_html
+
+  # SPIP ID (unique identifier)
+  field_spip_id: id
+
+  # Image principale depuis logourl (si présent)
+  field_image/target_id:
+    - plugin: skip_on_empty
+      source: logourl
+      method: process
+    - plugin: log_value
+      message: 'Image pipeline: logourl basename before lookup @value'
+    - plugin: callback
+      callable: basename
+    - plugin: log_value
+      message: 'Image pipeline: basename computed @value'
+    - plugin: entity_lookup
+      entity_type: file
+      value_key: filename
+      access_check: false
+    - plugin: log_value
+      message: 'Image pipeline: file entity_lookup result fid @value'
+  field_image/alt:
+    - plugin: skip_on_empty
+      source: logourl
+      method: process
+    - plugin: log_value
+      message: 'Image pipeline: logourl present, setting ALT from titre'
+    - plugin: get
+      source: titre
+
+  # Tags - split by semicolon and create/reference taxonomy terms
+  field_tags:
+    - plugin: skip_on_empty
+      source: tags1
+      method: process
+    - plugin: explode
+      delimiter: ';'
+    - plugin: callback
+      callable: trim
+    - plugin: entity_generate
+      entity_type: taxonomy_term
+      bundle: tags
+      value_key: name
+      bundle_key: vid
+
+  # Gallery documents -> Media references (multi-value)
+  field_gallery:
+    - plugin: spip_portfolio_to_media
+      source: portfolio
+      base_url: 'https://uic.org/com/'
+      documents_index_url: 'https://uic.org/com/?page=documents_exportxml'
+      documents_id_param: 'id_document'
+      destination_scheme: 'public://'
+      destination_subdir: 'spip/documents'
+      media_bundle: 'image'
+      media_file_field: 'field_media_image'
+      reuse_existing: true
+
+destination:
+  plugin: 'entity:node'
+  default_bundle: article
+
+migration_dependencies:
+  required: []
+  optional: []
+
+

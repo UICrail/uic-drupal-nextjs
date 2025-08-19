@@ -1,0 +1,6 @@
+id: spip_import
+label: 'SPIP Import'
+description: 'Migrations for importing SPIP content into Drupal'
+source_type: 'SPIP XML'
+shared_configuration: { }
+

@@ -1,0 +1,13 @@
+spip_to_drupal.admin:
+  title: 'SPIP Migration'
+  description: 'Manage SPIP to Drupal migrations'
+  route_name: spip_to_drupal.admin
+  parent: system.admin_content
+  weight: 100
+
+spip_to_drupal.statistics:
+  title: 'Migration Statistics'
+  description: 'View SPIP migration statistics'
+  route_name: spip_to_drupal.statistics
+  parent: spip_to_drupal.admin
+  weight: 10

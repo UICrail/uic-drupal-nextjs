@@ -1,0 +1,83 @@
+#CACHE{0}[(#HTTP_HEADER{Content-type: text/xml[; charset=(#CHARSET)]})]
+<?xml version="1.0"[ encoding="(#CHARSET)"]?>
+<!DOCTYPE articles>
+<rubriques xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink">
+	[(#SET{num_page,[(#ENV{num_page}|intval|?{[(#ENV{num_page}|intval)],1})]})]
+	[(#SET{par_page,[(#ENV{par_page}|intval|?{[(#ENV{par_page}|intval)],10})]})]
+	[(#SET{debut,[(#GET{num_page}|moins{1}|mult{#GET{par_page}})]})]
+
+	<BOUCLE_rub(RUBRIQUES){id_secteur IN 99}>
+		#SET{rubrique_id,#ID_RUBRIQUE}
+		<BOUCLE_content(ARTICLES){id_rubrique}{#GET{debut},#GET{par_page}}{!par date}>
+			<rubrique xml:id="art#ID_ARTICLE">
+				<id>art#ID_ARTICLE</id>
+				<parentid>[rub(#GET{rubrique_id})]</parentid>
+				<auteurs>
+					<BOUCLE_auteurs(AUTEURS){id_article}>[(#EMAIL|extraire_email)];</BOUCLE_auteurs>
+				</auteurs>
+				<logo>[(#LOGO_ARTICLE|oui)logo#ID_ARTICLE]</logo>
+				<surtitre>[(#SURTITRE|entites_html|replace{&ndash;,–}|replace{&mdash;,—}|replace{&nbsp;,
+					}|replace{&amp;,&})]</surtitre>
+				<titre>[(#TITRE|entites_html|replace{&ndash;,–}|replace{&mdash;,—}|replace{&nbsp;, }|replace{&amp;,&})]
+				</titre>
+				<soustitre>[(#SOUSTITRE|entites_html|replace{&ndash;,–}|replace{&mdash;,—}|replace{&nbsp;,
+					}|replace{&amp;,&})]</soustitre>
+				<pub>#DATE</pub>
+				<chapo>[(#CHAPO|entites_html|replace{&ndash;,–}|replace{&mdash;,—}|replace{&nbsp;, }|replace{&amp;,&})]
+				</chapo>
+				<formerurl>#URL_ARTICLE</formerurl>
+				<texte>
+					<![CDATA[[(#TEXTE*
+								|nettoyer_raccourcis_typo
+								|propre
+								|liens_absolus
+								|nettoyer_markup
+								|replace{<ul class="spip">,<ul>}
+								|replace{<ol class="spip">,<ol>}
+								|replace{<h2 class="spip">,<h2>}
+								|replace{<h3 class="spip">,<h3>}
+								|replace{<h4 class="spip">,<h4>}
+								|replace{<h5 class="spip">,<h5>}
+								|replace{<h6 class="spip">,<h6>}
+								|replace{<p class="spip">,<p>}
+								|replace{<div class="spip">,<div>}
+								|replace{<blockquote class="spip">,<blockquote>}
+								|replace{<table class="spip">,<table>}
+								|replace{<li> ,<li>}
+								|replace{<br /><img src="squelettes-dist/puce.gif" width="8" height="11" class="puce" alt="-" />&nbsp;,<li>}
+								|replace{<p><img src="squelettes-dist/puce.gif" width="8" height="11" class="puce" alt="-" />&nbsp;,<li>}
+								|replace{<img src="squelettes-dist/puce.gif" width="8" height="11" class="puce" alt="-" />,}
+								|replace{ target="_blank", target="_blank" rel="noopener"}
+								|replace{&ndash;,–}
+								|replace{&mdash;,—}
+								|replace{&nbsp;, }
+								|replace{&hellip;,…}
+								|replace{&laquo;,«}
+								|replace{&raquo;,»}
+								|replace{&ldquo;,"}
+								|replace{&rdquo;,"}
+								|replace{&lsquo;,'}
+								|replace{&rsquo;,'}
+								|replace{&amp;,&}
+								|trim)]]]>
+				</texte>
+				<group1>
+					<BOUCLE_keywords(MOTS) {id_article}{id_groupe=1}>
+						[(#TITRE_MOT|extraire_multi{'en'}|trim);]
+						</BOUCLE_keywords>
+				</group1>
+				<themes>
+					<BOUCLE_keywords2(MOTS) {id_article}{id_groupe=1}>[(#ID_MOT);]</BOUCLE_keywords2>
+				</themes>
+				<ps>
+					<![CDATA[[(#PS*|modif_doc|propre|liens_absolus|entites_html|replace{&ndash;,–}|replace{&mdash;,—}|replace{&nbsp;, }|replace{&hellip;,…}|replace{&laquo;,«}|replace{&raquo;,»}|replace{&amp;,&})]]]>
+				</ps>
+				<note>#NOTES</note>
+				<visits>#VISITES</visits>
+				<portfolio>
+					<BOUCLE_docs(DOCUMENTS){id_article}{mode=document}{doublons}>doc#ID_DOCUMENT;</BOUCLE_docs>
+				</portfolio>
+			</rubrique>
+			</BOUCLE_content>
+			</BOUCLE_rub>
+</rubriques>

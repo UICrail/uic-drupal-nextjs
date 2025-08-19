@@ -1,0 +1,43 @@
+label: Sisältö
+display:
+  default:
+    display_title: Oletus
+    display_options:
+      title: Sisältö
+      fields:
+        title:
+          label: Otsikko
+        type:
+          separator: ', '
+        name:
+          label: Tekijä
+        status:
+          label: Tila
+        changed:
+          label: Päivitetty
+        operations:
+          label: Toimenpiteet
+      exposed_form:
+        options:
+          submit_button: Suodatus
+          reset_button_label: Palauta
+          exposed_sorts_label: Lajittele
+          sort_asc_label: Asc
+          sort_desc_label: Desc
+      filters:
+        title:
+          expose:
+            label: Otsikko
+        status:
+          expose:
+            label: Tila
+        langcode:
+          expose:
+            label: Kieli
+  page_1:
+    display_title: Sivu
+    display_options:
+      menu:
+        title: Sisältö
+      tab_options:
+        title: Sisältö

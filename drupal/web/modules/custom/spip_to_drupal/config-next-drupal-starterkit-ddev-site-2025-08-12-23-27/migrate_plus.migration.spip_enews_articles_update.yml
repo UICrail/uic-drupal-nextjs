@@ -1,0 +1,110 @@
+uuid: f5e70da5-cc34-43c0-a25c-47c5ab10be0c
+langcode: en
+status: true
+dependencies: {  }
+_core:
+  default_config_hash: 2hnM97KCiCrVRoyvILkNXLFOt_fHuc6mM_ExGn6JKgM
+id: spip_enews_articles_update
+class: null
+idMap: {  }
+field_plugin_method: null
+cck_plugin_method: null
+migration_tags: null
+migration_group: spip_import
+label: '[SPIP] eNews Articles Import with Update Support'
+source:
+  plugin: spip_xml_file
+  file_path: 'public://feeds/enews.xml'
+  item_selector: //rubrique
+process:
+  type:
+    plugin: default_value
+    default_value: article
+  langcode:
+    plugin: default_value
+    default_value: en
+  title: titre
+  body/value:
+    -
+      plugin: spip_raccourcis_to_html
+      source: texte
+      base_url: 'https://uic.org/com/'
+    -
+      plugin: spip_doc_to_embed
+      base_url: 'https://uic.org/com/'
+      doc_path_pattern: IMG
+      documents_index_url: 'https://uic.org/com/?page=documents_xmlexport'
+    -
+      plugin: spip_html_transform
+    -
+      plugin: spip_html_media_embed
+      base_url: 'https://uic.org/com/'
+      destination_scheme: 'public://'
+      destination_subdir: spip/images
+      reuse_existing: true
+      use_media: true
+      media_bundle: image
+      media_image_field: field_media_image
+      strip_width_height: true
+  body/format:
+    plugin: default_value
+    default_value: full_html
+  field_spip_url: formerurl
+  field_subtitle: soustitre
+  field_spip_id: id
+  field_image:
+    -
+      plugin: skip_on_empty
+      source: logourl
+      method: process
+    -
+      plugin: download
+      source:
+        - logourl
+        - logo
+      guzzle_options:
+        verify: false
+      file_exists: 'use existing'
+      reuse: true
+  field_tags:
+    -
+      plugin: skip_on_empty
+      source: tags1
+      method: process
+    -
+      plugin: explode
+      delimiter: ;
+    -
+      plugin: callback
+      callable: trim
+    -
+      plugin: entity_generate
+      entity_type: taxonomy_term
+      bundle: tags
+      value_key: name
+      bundle_key: vid
+  field_gallery:
+    -
+      plugin: spip_portfolio_to_media
+      source: portfolio
+      base_url: 'https://uic.org/com/'
+      documents_index_url: 'https://uic.org/com/?page=documents_exportxml'
+      documents_id_param: id_document
+      destination_scheme: 'public://'
+      destination_subdir: spip/documents
+      media_bundle: image
+      media_file_field: field_media_image
+      reuse_existing: true
+      allowed_extensions:
+        - jpg
+        - jpeg
+        - png
+        - gif
+        - webp
+destination:
+  plugin: spip_node_update
+  default_bundle: article
+migration_dependencies:
+  required: {  }
+  optional: {  }
+include: null

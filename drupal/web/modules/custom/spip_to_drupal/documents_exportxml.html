@@ -1,0 +1,20 @@
+#CACHE{0}[(#HTTP_HEADER{Content-type: text/xml[; charset=(#CHARSET)]})]
+<?xml version="1.0"[ encoding="(#CHARSET)"]?>
+<!DOCTYPE docs>
+<docs xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink">
+    [(#SET{id_doc, #ENV{id_document}|intval})]
+    [(#SET{id_art, #ENV{id_article}|intval})]
+
+    <BOUCLE_one(DOCUMENTS){id_document?}{id_document=#GET{id_doc}}{0,1}>
+        <doc xml:id="doc#ID_DOCUMENT">
+            <doc_url>[(#URL_DOCUMENT|url_absolue)]</doc_url>
+        </doc>
+        </BOUCLE_one>
+
+        <BOUCLE_by_article(DOCUMENTS){id_article?}{id_article=#GET{id_art}}{par id_document}>
+            <doc xml:id="doc#ID_DOCUMENT">
+                <doc_url>[(#URL_DOCUMENT|url_absolue)]</doc_url>
+            </doc>
+            </BOUCLE_by_article>
+
+</docs>

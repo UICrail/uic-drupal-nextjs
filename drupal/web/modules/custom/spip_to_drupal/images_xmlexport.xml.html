@@ -1,0 +1,20 @@
+#CACHE{0}
+<?xml version="1.0" encoding="utf-8" ?>
+  <!DOCTYPE docs>
+	<docs xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink">
+		<BOUCLE_docs(DOCUMENTS){!par date}{extension in png, jpg, jpeg, gif}{doublons}>
+			<doc xml:id="#ID_DOCUMENT">
+			<doc_title>[(#TITRE|?{#TITRE, [(#URL_DOCUMENT|explode{/}|array_pop)]})]</doc_title>
+		      <doc_desc>#DESCRIPTIF</doc_desc>
+			  <id>doc#ID_DOCUMENT</id>
+		      <doc_date>#DATE</doc_date>
+		      <doc_credit>#CREDITS</doc_credit>
+		      <doc_type>#MIME_TYPE</doc_type>
+		      <doc_thumb>[(#LOGO_DOCUMENT|extraire_attribut{src}|url_absolue)]</doc_thumb>
+		      <doc_taille>#TAILLE</doc_taille>
+		      <doc_alt>#ALT</doc_alt>
+		      <doc_url>[(#URL_DOCUMENT|abs_url)]</doc_url>
+		   </doc>
+		 </BOUCLE_docs>
+ </docs>
+ 

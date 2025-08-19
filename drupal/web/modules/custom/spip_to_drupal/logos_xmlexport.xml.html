@@ -1,0 +1,14 @@
+#CACHE{0}
+<?xml version="1.0" encoding="utf-8" ?>
+  <!DOCTYPE docs>
+	<docs xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink">
+		<BOUCLE_docs(ARTICLES)>
+		      [(#LOGO_ARTICLE|oui) <doc xml:id="#ID_ARTICLE">
+			<doc_title>#TITRE logo</doc_title>
+			  <id>logo#ID_ARTICLE</id>
+		      <doc_url>[(#LOGO_ARTICLE|extraire_attribut{src}|url_absolue)]</doc_url>
+		   </doc>
+		   ]
+		 </BOUCLE_docs>
+ </docs>
+ 

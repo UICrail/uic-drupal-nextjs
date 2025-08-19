@@ -1,0 +1,43 @@
+display:
+  default:
+    display_title: Oletus
+    display_options:
+      fields:
+        thumbnail__target_id:
+          separator: ', '
+        name:
+          separator: ', '
+        bundle:
+          label: Tyyppi
+          separator: ', '
+        uid:
+          label: Tekijä
+          separator: ', '
+        status:
+          label: Tila
+          separator: ', '
+        changed:
+          label: Päivitetty
+          separator: ', '
+        operations:
+          label: Toimenpiteet
+      pager:
+        options:
+          expose:
+            items_per_page_label: 'Merkintöjä sivua kohti'
+            items_per_page_options_all_label: '- Kaikki -'
+            offset_label: Offset
+      exposed_form:
+        options:
+          submit_button: Suodatus
+          reset_button_label: Palauta
+          exposed_sorts_label: Lajittele
+          sort_asc_label: Asc
+          sort_desc_label: Desc
+      filters:
+        bundle:
+          expose:
+            label: Tyyppi
+        langcode:
+          expose:
+            label: Kieli

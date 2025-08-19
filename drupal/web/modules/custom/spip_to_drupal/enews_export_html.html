@@ -1,0 +1,64 @@
+#CACHE{0}[(#HTTP_HEADER{Content-type: text/xml[; charset=(#CHARSET)]})]
+<?xml version="1.0"[ encoding="(#CHARSET)"]?>
+<!DOCTYPE articles>
+<rubriques xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink">
+	[(#SET{num_page,[(#ENV{num_page}|intval|?{[(#ENV{num_page}|intval)],1})]})]
+	[(#SET{par_page,[(#ENV{par_page}|intval|?{[(#ENV{par_page}|intval)],10})]})]
+	[(#SET{debut,[(#GET{num_page}|moins{1}|mult{#GET{par_page}})]})]
+
+	<BOUCLE_content(ARTICLES){id_rubrique=7}{#GET{debut},#GET{par_page}}{!par date}>
+		<BOUCLE_firstimg(DOCUMENTS) {id_article}{extension IN png,jpg,gif}{vu=non}{par rang_lien, num titre, date}{0,1}>
+			[(#SET{featured-img,comdoc#ID_DOCUMENT})]
+			[(#SET{featured-img-url,#URL_DOCUMENT})]
+			</BOUCLE_firstimg>
+			<rubrique xml:id="art#ID_ARTICLE">
+				<id>art#ID_ARTICLE</id>
+				<parentid>[rub(#GET{rubrique_id})]</parentid>
+				<auteurs>
+					<BOUCLE_auteurs(AUTEURS){id_article}>[(#EMAIL)];</BOUCLE_auteurs>
+				</auteurs>
+				[(#LOGO_ARTICLE|oui)<logo>comlogo#ID_ARTICLE</logo>]
+				[(#LOGO_ARTICLE|non)<logo>#GET{featured-img-url}</logo>]
+				<logourl>#GET{featured-img-url}</logourl>
+				<surtitre>#SURTITRE</surtitre>
+				<titre>#TITRE</titre>
+				<formerurl>#URL_ARTICLE</formerurl>
+				<soustitre>#SOUSTITRE</soustitre>
+				<pub>#DATE</pub>
+				<chapo>#CHAPO</chapo>
+				<texte>
+					<![CDATA[[(#TEXTE*
+							|propre
+							|liens_absolus
+							|replace{<ul class="spip">,<ul>}
+							|replace{<h2 class="spip">,<h2>}
+							|replace{<h3 class="spip">,<h3>}
+							|replace{<li> ,<li>}
+							|replace{<br /><img src="squelettes-dist/puce.gif" width="8" height="11" class="puce" alt="-" />&nbsp;,<li>}
+							|replace{<p><img src="squelettes-dist/puce.gif" width="8" height="11" class="puce" alt="-" />&nbsp;,<li>})]]]>
+				</texte>
+				<group1>
+					<BOUCLE_keywords(MOTS) {id_article}{id_groupe IN 3,13}>[(#TITRE_MOT|extraire_multi{'en'}|trim);]
+						</BOUCLE_keywords>
+				</group1>
+				<tags1>
+					<BOUCLE_keywords1(MOTS) {id_article}{id_groupe IN 7}>[(#TITRE_MOT|extraire_multi{'en'}|trim);]
+						</BOUCLE_keywords1>
+				</tags1>
+				<themes>
+					<BOUCLE_keywords2(MOTS) {id_article}{id_groupe IN 3,13}>[(#ID_MOT);]</BOUCLE_keywords2>
+				</themes>
+				<ps>
+					<![CDATA[[(#PS*|propre|liens_absolus)]]]>
+				</ps>
+				<note>#NOTES</note>
+				<visits>#VISITES</visits>
+				<images>
+					<BOUCLE_docs1(DOCUMENTS){id_article}{doublons}{media=image}>comdoc#ID_DOCUMENT;</BOUCLE_docs1>
+				</images>
+				<portfolio>
+					<BOUCLE_docs(DOCUMENTS){id_article}{mode=document}{doublons}>comdoc#ID_DOCUMENT;</BOUCLE_docs>
+				</portfolio>
+			</rubrique>
+			</BOUCLE_content>
+</rubriques>

@@ -1,0 +1,12 @@
+uuid: a8b2f8fa-1d5a-4c4d-86ce-80f9feaffaf6
+langcode: en
+status: true
+dependencies: {  }
+_core:
+  default_config_hash: P8eiwCA5xh5lEE7-YXKLNB4r3xTgC6zYSKT3GzAwhl0
+id: spip_import
+label: 'SPIP Import'
+description: 'Migrations for importing SPIP content into Drupal'
+source_type: 'SPIP XML'
+module: null
+shared_configuration: {  }

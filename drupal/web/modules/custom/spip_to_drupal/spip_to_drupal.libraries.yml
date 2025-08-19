@@ -1,0 +1,9 @@
+admin:
+  css:
+    theme:
+      css/spip_to_drupal.admin.css: {}
+  dependencies:
+    - core/drupal
+    - core/jquery
+
+

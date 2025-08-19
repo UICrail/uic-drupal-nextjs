@@ -1,0 +1,34 @@
+#CACHE{3600}
+[(#REM) 	  /*, 13, 157, 30, 42, 26, 48, 22, 8, 5*/]
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE rubriques>
+<rubriques xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink">
+      <BOUCLE_rub(RUBRIQUES){id_secteur IN 145 } {tout} {par id_rubrique}>
+
+        <rubrique xml:id="#ID_RUBRIQUE">
+		            <id>rub#ID_RUBRIQUE</id>
+            <parentid>rub#ID_PARENT</parentid>
+            <auteurs>#AUTEUR</auteurs>
+            <logo><img class='spip_logo spip_logos' alt="" src="local/cache-vignettes/L200xH48/rubon5-d3b15.jpg?1705437626" width='200' height='48' /></logo>
+            <titre>#TITRE</titre>
+	    <soustitre>#SOUSTITRE</soustitre>
+            <pub>#DATE</pub>
+            <desc>
+                <![CDATA[#DESCRIPTIF]]>
+            </desc>
+	    <texte><![CDATA[[(#TEXTE*
+|modif_doc
+|propre
+|liens_absolus
+|replace{<ul class="spip">,<ul>}
+|replace{<h2 class="spip">,<h2>}
+|replace{<h3 class="spip">,<h3>}
+|replace{<li> ,<li>}
+|replace{<br /><img src="squelettes-dist/puce.gif" width="8" height="11" class="puce" alt="-" />&nbsp;,<li>}
+|replace{<p><img src="squelettes-dist/puce.gif" width="8" height="11" class="puce" alt="-" />&nbsp;,<li>})]]]></texte>
+            <group1><BOUCLE_keywords(MOTS) {id_rubrique}{id_groupe=1}>[(#TITRE_MOT|extraire_multi{'en'}|trim);]</BOUCLE_keywords></group1>
+	    <themes><BOUCLE_keywords2(MOTS) {id_rubrique}{id_groupe=1}>[(#ID_MOT);]</BOUCLE_keywords2></themes>
+			<portfolio><BOUCLE_docs(DOCUMENTS){id_rubrique}{mode=document}{doublons}>doc#ID_DOCUMENT;</BOUCLE_docs></portfolio>
+        </rubrique>
+        </BOUCLE_rub>
+</rubriques>

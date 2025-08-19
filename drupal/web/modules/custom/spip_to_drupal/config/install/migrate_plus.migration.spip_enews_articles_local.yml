@@ -1,0 +1,99 @@
+id: spip_enews_articles_local
+label: '[SPIP] eNews Articles Import - Local File'
+migration_group: spip_import
+migration_tags:
+  - SPIP
+  - eNews
+  - Local File
+source:
+  plugin: spip_xml_file
+  file_path: 'public://feeds/enews.xml'
+  item_selector: '//rubrique'
+  # No URL for local file
+  url: null
+  # Disable auto-pagination for local file; no hard cap
+  auto_paginate: false
+process:
+  type:
+    plugin: default_value
+    default_value: article
+  langcode:
+    plugin: default_value
+    default_value: en
+  title: titre
+  field_spip_id: id
+  field_spip_parent_id: parentid
+  field_spip_authors: auteurs
+  field_spip_logo: logo
+  field_spip_logo_url: logourl
+  field_spip_surtitre: surtitre
+  field_spip_former_url: formerurl
+  field_spip_soustitre: soustitre
+  field_spip_pub_date:
+    plugin: format_date
+    source: pub
+    from_format: 'Y-m-d H:i:s'
+    to_format: 'Y-m-d\TH:i:s'
+  field_spip_chapo:
+    - plugin: spip_raccourcis_to_html
+      source: chapo
+      base_url: 'https://uic.org/com/'
+    - plugin: spip_doc_to_embed
+      base_url: 'https://uic.org/com/'
+      doc_path_pattern: 'IMG'
+    - plugin: spip_html_transform
+    - plugin: spip_html_media_embed
+      base_url: 'https://uic.org/com/'
+      reuse_existing: true
+      use_media: true
+  field_spip_texte:
+    - plugin: spip_raccourcis_to_html
+      source: texte
+      base_url: 'https://uic.org/com/'
+    - plugin: spip_doc_to_embed
+      base_url: 'https://uic.org/com/'
+      doc_path_pattern: 'IMG'
+    - plugin: spip_html_transform
+    - plugin: spip_html_media_embed
+      base_url: 'https://uic.org/com/'
+      reuse_existing: true
+      use_media: true
+  field_spip_group1: group1
+  field_spip_tags1: tags1
+  field_spip_themes: themes
+  field_spip_ps:
+    - plugin: spip_raccourcis_to_html
+      source: ps
+      base_url: 'https://uic.org/com/'
+    - plugin: spip_doc_to_embed
+      base_url: 'https://uic.org/com/'
+      doc_path_pattern: 'IMG'
+    - plugin: spip_html_transform
+    - plugin: spip_html_media_embed
+      base_url: 'https://uic.org/com/'
+      reuse_existing: true
+      use_media: true
+  field_spip_note: note
+  field_spip_visits: visits
+  field_spip_images: images
+  field_spip_portfolio: portfolio
+  status:
+    plugin: default_value
+    default_value: 1
+  created:
+    plugin: format_date
+    source: pub
+    from_format: 'Y-m-d H:i:s'
+    to_format: 'U'
+  changed:
+    plugin: format_date
+    source: pub
+    from_format: 'Y-m-d H:i:s'
+    to_format: 'U'
+destination:
+  plugin: 'entity:node'
+  default_bundle: article
+  key: field_spip_id
+migration_dependencies:
+  required: {}
+  optional: {}
