@@ -1,0 +1,55 @@
+#!/bin/sh
+
+# Fetch the GIT diff and format it as command input:
+DIFF=$(git -c diff.mnemonicprefix=false -c diff.noprefix=false --no-pager diff -r -p -m -M --full-index --no-color --staged | cat)
+
+export GRUMPHP_GIT_WORKING_DIR="$(git rev-parse --show-toplevel)"
+
+GRUM_BIN_PATH="drupal/vendor/bin/grumphp"
+
+# Runner selection: DDEV (running) > Lando (running) > local php > skip
+if command -v ddev >/dev/null 2>&1 && ddev describe >/dev/null 2>&1; then
+  GRUM_CMD="ddev exec php"
+elif command -v lando >/dev/null 2>&1 && lando info >/dev/null 2>&1; then
+  GRUM_CMD="lando php"
+elif command -v php >/dev/null 2>&1; then
+  GRUM_CMD="php"
+else
+  echo "[pre-commit] Skipping GrumPHP: no runner found (ddev/lando/php)." >&2
+  exit 0
+fi
+
+printf '%s\n' "${DIFF}" | ${GRUM_CMD} ${GRUM_BIN_PATH} git:pre-commit --skip-success-output || exit 1
+
+#!/bin/sh
+
+#
+# Run the hook command.
+# Note: this will be replaced by the real command during copy.
+#
+
+# Fetch the GIT diff and format it as command input:
+DIFF=$(git -c diff.mnemonicprefix=false -c diff.noprefix=false --no-pager diff -r -p -m -M --full-index --no-color --staged | cat)
+
+# Grumphp env vars
+
+export GRUMPHP_GIT_WORKING_DIR="$(git rev-parse --show-toplevel)"
+
+# Run GrumPHP (prefer DDEV, fallback to Lando, then local PHP)
+# Decide execution context (run from repo root, always target drupal/vendor)
+GRUM_BIN_PATH="drupal/vendor/bin/grumphp"
+
+# Choose runner
+if command -v ddev >/dev/null 2>&1 && ddev describe >/dev/null 2>&1; then
+  GRUM_CMD="ddev exec php"
+elif command -v lando >/dev/null 2>&1 && lando info >/dev/null 2>&1; then
+  GRUM_CMD="lando php"
+elif command -v php >/dev/null 2>&1; then
+  GRUM_CMD="php"
+else
+  echo "[pre-commit] Skipping GrumPHP: no runner found (ddev/lando/php)." >&2
+  exit 0
+fi
+
+# Pipe staged diff to GrumPHP without eval (handles any quotes/backticks safely)
+printf '%s\n' "${DIFF}" | ${GRUM_CMD} ${GRUM_BIN_PATH} git:pre-commit --skip-success-output || exit 1
