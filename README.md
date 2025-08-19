@@ -73,6 +73,16 @@ If the script has failed on some step, and instead of continuing you want to sta
 
 > NOTE: the script will install the site from scratch. Export your database if you have started working with the template, and you have something valuable in it. :)
 
+### Git hooks setup (one-time)
+
+This repository tracks Git hooks in `.githooks/` so they can be shared by the team. After cloning, enable them with:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+The hooks auto-detect your environment and try to run GrumPHP using, in order of preference: DDEV (running), Lando (running), or local `php`. If none is available, the hooks skip gracefully and do not block your commit.
+
 ## 👨‍💻Urls
 
 After the setup is complete, you can access the site at the following URLs:
