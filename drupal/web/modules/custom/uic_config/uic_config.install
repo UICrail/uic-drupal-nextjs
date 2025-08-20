@@ -10,6 +10,9 @@ use Drupal\node\Entity\NodeType;
 function uic_config_install(): void {
   // Ensure required content type exists only if truly needed elsewhere.
   // This module's primary responsibility is to add custom fields to Article.
+  _uic_config_create_activity_page_content_type();
+  _uic_config_create_activity_page_fields();
+  _uic_config_configure_activity_page_displays();
   _uic_config_create_article_fields();
   _uic_config_configure_article_displays();
   _uic_config_configure_graphql_compose();
@@ -32,6 +35,167 @@ function _uic_config_ensure_field_storage(string $entityType, string $fieldName,
     'cardinality' => $cardinality,
     'translatable' => TRUE,
   ])->save();
+}
+
+/**
+ * Ensure Activity page content type exists.
+ */
+function _uic_config_create_activity_page_content_type(): void {
+  $bundle = 'activity_page';
+  if (NodeType::load($bundle)) {
+    return;
+  }
+
+  $type = NodeType::create([
+    'type' => $bundle,
+    'name' => 'Activity page',
+    'description' => 'Page type for activities (migrated from SPIP or created manually).',
+  ]);
+  $type->save();
+}
+
+/**
+ * Create all Activity page fields in an idempotent way.
+ */
+function _uic_config_create_activity_page_fields(): void {
+  $entityType = 'node';
+  $bundle = 'activity_page';
+
+  if (!NodeType::load($bundle)) {
+    return;
+  }
+
+  // body (text_with_summary)
+  _uic_config_ensure_field_storage($entityType, 'body', 'text_with_summary', [], 1);
+  _uic_config_ensure_field_instance($entityType, $bundle, 'body', 'Body', ['display_summary' => TRUE]);
+
+  // field_subtitle (string)
+  _uic_config_ensure_field_storage($entityType, 'field_subtitle', 'string', ['max_length' => 255], 1);
+  _uic_config_ensure_field_instance($entityType, $bundle, 'field_subtitle', 'Subtitle');
+
+  // field_header (text_long)
+  _uic_config_ensure_field_storage($entityType, 'field_header', 'text_long', [], 1);
+  _uic_config_ensure_field_instance($entityType, $bundle, 'field_header', 'Header');
+
+  // field_footer (text_long)
+  _uic_config_ensure_field_storage($entityType, 'field_footer', 'text_long', [], 1);
+  _uic_config_ensure_field_instance($entityType, $bundle, 'field_footer', 'Footer');
+
+  // field_gallery (media reference, multiple)
+  _uic_config_ensure_field_storage(
+    $entityType,
+    'field_gallery',
+    'entity_reference',
+    [
+      'target_type' => 'media',
+    ],
+    -1
+  );
+  _uic_config_ensure_field_instance(
+    $entityType,
+    $bundle,
+    'field_gallery',
+    'Gallery',
+    [
+      'handler' => 'default:media',
+      'handler_settings' => [
+        'target_bundles' => NULL,
+      ],
+    ]
+  );
+
+  // field_attachments (media reference, multiple)
+  _uic_config_ensure_field_storage(
+    $entityType,
+    'field_attachments',
+    'entity_reference',
+    [
+      'target_type' => 'media',
+    ],
+    -1
+  );
+  _uic_config_ensure_field_instance(
+    $entityType,
+    $bundle,
+    'field_attachments',
+    'Attachments',
+    [
+      'handler' => 'default:media',
+      'handler_settings' => [
+        'target_bundles' => NULL,
+      ],
+    ]
+  );
+
+  // field_spip_id (string)
+  _uic_config_ensure_field_storage($entityType, 'field_spip_id', 'string', ['max_length' => 255], 1);
+  _uic_config_ensure_field_instance($entityType, $bundle, 'field_spip_id', 'SPIP ID');
+
+  // field_spip_url (string)
+  _uic_config_ensure_field_storage($entityType, 'field_spip_url', 'string', ['max_length' => 2048], 1);
+  _uic_config_ensure_field_instance($entityType, $bundle, 'field_spip_url', 'SPIP URL');
+}
+
+/**
+ * Configure Activity page form and view displays (non-destructive).
+ */
+function _uic_config_configure_activity_page_displays(): void {
+  $formDisplay = \Drupal::entityTypeManager()
+    ->getStorage('entity_form_display')
+    ->load('node.activity_page.default');
+
+  if ($formDisplay) {
+    $components = [
+      'title' => ['type' => 'string_textfield', 'weight' => 0, 'settings' => ['size' => 60, 'placeholder' => '']],
+      'body' => ['type' => 'text_textarea_with_summary', 'weight' => 1, 'settings' => ['rows' => 9, 'summary_rows' => 3]],
+      'field_subtitle' => ['type' => 'string_textfield', 'weight' => 2, 'settings' => ['size' => 60, 'placeholder' => '']],
+      'field_header' => ['type' => 'text_textarea', 'weight' => 3, 'settings' => ['rows' => 5, 'placeholder' => '']],
+      'field_footer' => ['type' => 'text_textarea', 'weight' => 4, 'settings' => ['rows' => 5, 'placeholder' => '']],
+      'field_gallery' => ['type' => 'media_library_widget', 'weight' => 5, 'settings' => ['media_types' => []]],
+      'field_attachments' => ['type' => 'media_library_widget', 'weight' => 6, 'settings' => ['media_types' => []]],
+      'field_spip_id' => ['type' => 'string_textfield', 'weight' => 7, 'settings' => ['size' => 60, 'placeholder' => '']],
+      'field_spip_url' => ['type' => 'string_textfield', 'weight' => 8, 'settings' => ['size' => 60, 'placeholder' => '']],
+    ];
+
+    $changed = FALSE;
+    foreach ($components as $name => $definition) {
+      if ($formDisplay->getComponent($name) === NULL) {
+        $formDisplay->setComponent($name, $definition);
+        $changed = TRUE;
+      }
+    }
+    if ($changed) {
+      $formDisplay->save();
+    }
+  }
+
+  $viewDisplay = \Drupal::entityTypeManager()
+    ->getStorage('entity_view_display')
+    ->load('node.activity_page.default');
+
+  if ($viewDisplay) {
+    // Hide auxiliary fields by default; body typically shown by theme/display.
+    $hide = [
+      'field_subtitle',
+      'field_header',
+      'field_footer',
+      'field_gallery',
+      'field_attachments',
+      'field_spip_id',
+      'field_spip_url',
+    ];
+
+    $changed = FALSE;
+    foreach ($hide as $name) {
+      if ($viewDisplay->getComponent($name) !== NULL) {
+        $viewDisplay->removeComponent($name);
+        $changed = TRUE;
+      }
+    }
+    if ($changed) {
+      $viewDisplay->save();
+    }
+  }
 }
 
 /**
@@ -206,6 +370,12 @@ function _uic_config_configure_graphql_compose(): void {
   $fieldConfig = $config->get('field_config') ?: [];
 
   $entityConfig['node'] = $entityConfig['node'] ?? [];
+  $entityConfig['node']['activity_page'] = $entityConfig['node']['activity_page'] ?? [
+    'enabled' => TRUE,
+    'query_load_enabled' => TRUE,
+    'edges_enabled' => TRUE,
+    'routes_enabled' => TRUE,
+  ];
   $entityConfig['node']['article'] = $entityConfig['node']['article'] ?? [
     'enabled' => TRUE,
     'query_load_enabled' => TRUE,
@@ -214,6 +384,7 @@ function _uic_config_configure_graphql_compose(): void {
   ];
 
   $fieldConfig['node'] = $fieldConfig['node'] ?? [];
+  $fieldConfig['node']['activity_page'] = $fieldConfig['node']['activity_page'] ?? [];
   $fieldConfig['node']['article'] = $fieldConfig['node']['article'] ?? [];
 
   foreach ([
@@ -230,11 +401,36 @@ function _uic_config_configure_graphql_compose(): void {
     }
   }
 
+  foreach ([
+    'body',
+    'field_subtitle',
+    'field_header',
+    'field_footer',
+    'field_gallery',
+    'field_attachments',
+    'field_spip_id',
+    'field_spip_url',
+  ] as $name) {
+    if (!isset($fieldConfig['node']['activity_page'][$name])) {
+      $fieldConfig['node']['activity_page'][$name] = ['enabled' => TRUE];
+    }
+  }
+
   $config->set('entity_config', $entityConfig);
   $config->set('field_config', $fieldConfig);
   $config->save();
 
   \Drupal::service('cache_tags.invalidator')->invalidateTags(['graphql_compose_schema']);
+}
+
+/**
+ * Update: Add Activity page content type and fields for existing installs.
+ */
+function uic_config_update_9001(): void {
+  _uic_config_create_activity_page_content_type();
+  _uic_config_create_activity_page_fields();
+  _uic_config_configure_activity_page_displays();
+  _uic_config_configure_graphql_compose();
 }
 
 

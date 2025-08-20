@@ -26,15 +26,17 @@ process:
   body/value:
     - plugin: spip_raccourcis_to_html
       source: texte
-      base_url: 'https://uic.org/com/'
+      base_url: 'https://uic.org/'
+    - plugin: spip_auto_link
+      base_url: 'https://uic.org/'
     - plugin: spip_doc_to_embed
-      base_url: 'https://uic.org/com/'
+      base_url: 'https://uic.org/'
       doc_path_pattern: 'IMG'
       documents_index_url: 'https://uic.org/com/?page=documents_exportxml'
       documents_id_param: 'id_document'
     - plugin: spip_html_transform
     - plugin: spip_html_media_embed
-      base_url: 'https://uic.org/com/'
+      base_url: 'https://uic.org/'
       destination_scheme: 'public://'
       destination_subdir: 'spip/images'
       reuse_existing: true
@@ -56,15 +58,17 @@ process:
   field_header/value:
     - plugin: spip_raccourcis_to_html
       source: chapo
-      base_url: 'https://uic.org/com/'
+      base_url: 'https://uic.org/'
+    - plugin: spip_auto_link
+      base_url: 'https://uic.org/'
     - plugin: spip_doc_to_embed
-      base_url: 'https://uic.org/com/'
+      base_url: 'https://uic.org/'
       doc_path_pattern: 'IMG'
       documents_index_url: 'https://uic.org/com/?page=documents_exportxml'
       documents_id_param: 'id_document'
     - plugin: spip_html_transform
     - plugin: spip_html_media_embed
-      base_url: 'https://uic.org/com/'
+      base_url: 'https://uic.org/'
       reuse_existing: true
       use_media: true
   field_header/format:
@@ -75,15 +79,17 @@ process:
   field_footer/value:
     - plugin: spip_raccourcis_to_html
       source: ps
-      base_url: 'https://uic.org/com/'
+      base_url: 'https://uic.org/'
+    - plugin: spip_auto_link
+      base_url: 'https://uic.org/'
     - plugin: spip_doc_to_embed
-      base_url: 'https://uic.org/com/'
+      base_url: 'https://uic.org/'
       doc_path_pattern: 'IMG'
       documents_index_url: 'https://uic.org/com/?page=documents_exportxml'
       documents_id_param: 'id_document'
     - plugin: spip_html_transform
     - plugin: spip_html_media_embed
-      base_url: 'https://uic.org/com/'
+      base_url: 'https://uic.org/'
       reuse_existing: true
       use_media: true
   field_footer/format:
@@ -137,7 +143,7 @@ process:
   field_gallery:
     - plugin: spip_portfolio_to_media
       source: images
-      base_url: 'https://uic.org/com/'
+      base_url: 'https://uic.org/'
       documents_index_url: 'https://uic.org/com/?page=documents_exportxml'
       documents_id_param: 'id_document'
       destination_scheme: 'public://'
@@ -151,7 +157,7 @@ process:
   field_attachments:
     - plugin: spip_portfolio_to_media
       source: portfolio
-      base_url: 'https://uic.org/com/'
+      base_url: 'https://uic.org/'
       documents_index_url: 'https://uic.org/com/?page=documents_exportxml'
       documents_id_param: 'id_document'
       destination_scheme: 'public://'

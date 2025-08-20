@@ -57,6 +57,15 @@ if command -v ddev >/dev/null 2>&1; then
   echo "🧹 Clearing all caches..."
   ddev drush cr
   
+  echo "🗑️ Removing SPIP migrations (including rubriques) to avoid conflicts..."
+  ddev drush config:delete migrate_plus.migration.spip_enews_articles || true
+  ddev drush config:delete migrate_plus.migration.spip_enews_articles_auto_paginate || true
+  ddev drush config:delete migrate_plus.migration.spip_enews_articles_update || true
+  ddev drush config:delete migrate_plus.migration.spip_project_pages || true
+  ddev drush config:delete migrate_plus.migration.spip_project_pages_local || true
+  ddev drush config:delete migrate_plus.migration.spip_rubriques || true
+  ddev drush config:delete migrate_plus.migration_group.spip_import || true
+
   echo "✅ Installing module..."
   ddev drush en uic_config -y
   

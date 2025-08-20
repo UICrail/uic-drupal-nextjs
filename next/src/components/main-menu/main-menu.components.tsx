@@ -26,7 +26,7 @@ export function MenuContainer({
     <div
       className={cn(
         css.mainMenu,
-        "relative mx-auto max-w-6xl font-inter tracking-wide",
+        "relative mx-auto max-w-7xl font-inter tracking-wide",
         !isOpen && "hidden",
       )}
     >

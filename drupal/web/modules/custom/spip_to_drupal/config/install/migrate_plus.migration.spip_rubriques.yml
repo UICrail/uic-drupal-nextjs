@@ -1,0 +1,124 @@
+id: spip_rubriques
+label: '[SPIP] Rubriques Import'
+migration_group: spip_import
+source:
+  plugin: spip_xml_file
+  url: 'https://uic.org/?page=rubriques_export'
+  item_selector: '//*[local-name()="rubrique"]'
+  auto_paginate: true
+
+process:
+  type:
+    plugin: default_value
+    default_value: activity_page
+
+  langcode:
+    plugin: default_value
+    default_value: en
+
+  title: titre
+
+  field_spip_id: id
+
+  body/value:
+    - plugin: spip_raccourcis_to_html
+      source: texte
+      base_url: 'https://uic.org/'
+    - plugin: spip_doc_to_embed
+      base_url: 'https://uic.org/'
+      doc_path_pattern: 'IMG'
+      documents_index_url: 'https://uic.org/com/?page=documents_exportxml'
+      documents_id_param: 'id_document'
+    - plugin: spip_html_transform
+    - plugin: spip_html_media_embed
+      base_url: 'https://uic.org/'
+      destination_scheme: 'public://'
+      destination_subdir: 'spip/images'
+      reuse_existing: true
+      use_media: true
+      media_bundle: 'image'
+      media_image_field: 'field_media_image'
+      strip_width_height: true
+    - plugin: spip_auto_link
+      base_url: 'https://uic.org/'
+  body/format:
+    plugin: default_value
+    default_value: full_html
+
+  field_header/value:
+    - plugin: spip_raccourcis_to_html
+      source: desc
+      base_url: 'https://uic.org/'
+    - plugin: spip_doc_to_embed
+      base_url: 'https://uic.org/'
+      doc_path_pattern: 'IMG'
+      documents_index_url: 'https://uic.org/com/?page=documents_exportxml'
+      documents_id_param: 'id_document'
+    - plugin: spip_html_transform
+    - plugin: spip_html_media_embed
+      base_url: 'https://uic.org/'
+      reuse_existing: true
+      use_media: true
+    - plugin: spip_auto_link
+      base_url: 'https://uic.org/'
+  field_header/format:
+    plugin: default_value
+    default_value: full_html
+
+  field_spip_url: formerurl
+
+  field_image/target_id:
+    - plugin: spip_extract_img_src
+      source: logourl
+    - plugin: spip_url_to_media
+      base_url: 'https://uic.org/'
+      destination_scheme: 'public://'
+      destination_subdir: 'spip/images'
+      reuse_existing: true
+      media_bundle: 'image'
+      media_file_field: 'field_media_image'
+      allowed_extensions: ['jpg','jpeg','png','gif','webp']
+  field_image/alt:
+    - plugin: skip_on_empty
+      source: logourl
+      method: process
+    - plugin: spip_url_to_alt
+
+  field_tags:
+    - plugin: skip_on_empty
+      source: group1
+      method: process
+    - plugin: explode
+      delimiter: ';'
+    - plugin: callback
+      callable: trim
+    - plugin: skip_on_empty
+      method: process
+    - plugin: entity_generate
+      entity_type: taxonomy_term
+      bundle: tags
+      value_key: name
+      bundle_key: vid
+
+  field_gallery:
+    - plugin: spip_portfolio_to_media
+      source: portfolio
+      base_url: 'https://uic.org/'
+      documents_index_url: 'https://uic.org/com/?page=documents_exportxml'
+      documents_id_param: 'id_document'
+      destination_scheme: 'public://'
+      destination_subdir: 'spip/documents'
+      media_bundle: 'image'
+      media_file_field: 'field_media_image'
+      reuse_existing: true
+      allowed_extensions: ['jpg','jpeg','png','gif','webp']
+
+destination:
+  plugin: 'entity:node'
+  default_bundle: activity_page
+
+migration_dependencies:
+  required: []
+  optional: []
+
+
