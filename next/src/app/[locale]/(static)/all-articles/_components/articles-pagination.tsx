@@ -25,9 +25,10 @@ export default function ArticlesPagination({
     <>
       <div ref={focusRef} tabIndex={-1} />
       <HeadingPage>{t("all-articles")}</HeadingPage>
-      <ul className="mt-4">
+      <h1>eNews</h1>
+      <ul className="mt-4 flex flex-wrap gap-4">
         {articles?.map((article) => (
-          <li key={article.id}>
+          <li key={article.id} className="max-w-xs">
             <ArticleListItem article={article} />
           </li>
         ))}

@@ -21,30 +21,38 @@ export function ArticleListItem({ article }: ArticleListItemProps) {
     <Link
       href={article.path}
       className={cn(
-        "relative mb-4 grid h-full rounded border p-4 transition-all hover:shadow-md",
-        article.sticky
-          ? "border-primary-100 bg-slate-200 dark:bg-slate-600"
-          : "border-finnishwinter bg-white dark:bg-black",
+        "group relative flex h-full flex-col overflow-hidden rounded-lg border bg-white shadow-sm transition-all duration-300 hover:shadow-lg dark:bg-gray-900",
+        "border-primary-200 bg-primary-50 dark:bg-primary-900/20",
       )}
     >
-      <h2 className="text-heading-xs mb-2 line-clamp-2 font-bold">
-        {article.title}
-      </h2>
-      <div className="text-md text-scapaflow mb-4 line-clamp-2">
-        {author && <>{t("posted-by", { author })} - </>}
-        {date}
-      </div>
-      <div className="flex flex-col items-start gap-4 sm:flex-row">
-        {article.image && (
+      {article.featuredImage && (
+        <div className="relative aspect-video overflow-hidden">
           <Image
-            src={article.image.url}
+            src={article.featuredImage.mediaImage.url}
             width={500}
             height={300}
-            className="w-full sm:w-40"
-            alt={article.image.alt}
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            alt={article.featuredImage.mediaImage.alt}
           />
-        )}
-        <p>{article.excerpt}</p>
+          {article.sticky && (
+            <div className="absolute right-2 top-2 h-2 w-2 rounded-full bg-cyan-500"></div>
+          )}
+        </div>
+      )}
+      <div className="flex flex-1 flex-col p-4">
+        <h2 className="group-hover:text-primary-600 dark:group-hover:text-primary-400 mb-2 line-clamp-2 text-lg font-semibold leading-tight text-gray-900 transition-colors dark:text-white">
+          {article.title}
+        </h2>
+        <div className="mb-3 text-sm text-gray-600 dark:text-gray-400">
+          {author && (
+            <span className="font-medium">{t("posted-by", { author })}</span>
+          )}
+          {author && date && <span className="mx-1">•</span>}
+          <span>{date}</span>
+        </div>
+        <p className="line-clamp-3 flex-1 text-sm text-gray-700 dark:text-gray-300">
+          {article.excerpt}
+        </p>
       </div>
     </Link>
   );

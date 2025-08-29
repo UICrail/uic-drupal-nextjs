@@ -55,7 +55,7 @@ export default async function AllArticlesPage({
 
   // This has to match one of the allowed values in the article listing view
   // in Drupal.
-  const PAGE_SIZE = 5;
+  const PAGE_SIZE = 20;
 
   const variables = {
     limit: PAGE_SIZE,

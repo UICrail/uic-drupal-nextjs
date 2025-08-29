@@ -98,6 +98,8 @@ field_config:
         enabled: true
       field_image:
         enabled: true
+      field_featured_image:
+        enabled: true
       field_tags:
         enabled: true
     frontpage:

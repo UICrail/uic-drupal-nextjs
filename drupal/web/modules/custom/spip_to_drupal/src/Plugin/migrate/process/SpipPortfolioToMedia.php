@@ -70,9 +70,18 @@ class SpipPortfolioToMedia extends ProcessPluginBase {
     // and also detect inline <docX>/<imgX> in texte/chapo/ps to dedupe by doc id.
     $embedded_ids = [];
     $embedded_doc_ids = [];
+    $featured_image_url = '';
     try {
       $tmp = $row->getTemporaryProperty('spip_embedded_media_ids');
       if (is_array($tmp)) { $embedded_ids = array_map('intval', $tmp); }
+    } catch (\Throwable $e) {}
+    
+    // Get the featured_image URL to avoid duplicating it in gallery
+    try {
+      $logourl = $row->getSourceProperty('logourl');
+      if (is_string($logourl) && trim($logourl) !== '') {
+        $featured_image_url = $this->buildAbsoluteUrl($logourl, $base_url);
+      }
     } catch (\Throwable $e) {}
     try {
       $inline_fields = [];
@@ -99,6 +108,13 @@ class SpipPortfolioToMedia extends ProcessPluginBase {
         // Fallback predictable path if no index map.
         $url = $this->buildAbsoluteUrl('IMG/doc' . $doc_id, $base_url);
       }
+      
+      // Skip if this URL matches the featured_image to avoid duplication
+      if ($featured_image_url !== '' && $url === $featured_image_url) {
+        \Drupal::logger('spip_to_drupal')->info('Portfolio dedup: skipping @url as it matches featured_image', ['@url' => $url]);
+        continue;
+      }
+      
       // Validate extension if we can parse it from URL.
       $path = parse_url($url, PHP_URL_PATH) ?: '';
       $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));

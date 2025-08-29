@@ -120,8 +120,8 @@ export const FRAGMENT_ARTICLE_TEASER = graphql(`
   fragment FragmentArticleTeaser on NodeArticle {
     __typename
     id
-    image {
-      ...FragmentImage
+    featuredImage {
+      ...FragmentMediaImage
     }
     path
     title

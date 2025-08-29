@@ -38,6 +38,13 @@ function uic_config_configure_article_fields() {
           'placeholder' => '',
         ],
       ],
+      'field_featured_image' => [
+        'type' => 'media_library_widget',
+        'weight' => 2,
+        'settings' => [
+          'media_types' => [],
+        ],
+      ],
       'field_header' => [
         'type' => 'text_textarea',
         'weight' => 9,
@@ -109,6 +116,7 @@ function uic_config_configure_article_fields() {
     // Hide custom fields by default in view display
     $hidden_fields = [
       'field_subtitle',
+      'field_featured_image',
       'field_header',
       'field_footer',
       'field_gallery',
@@ -171,44 +179,9 @@ function uic_config_configure_graphql_compose() {
     $field_config['node'] = [];
   }
 
-  // Configure Article fields (only if not already configured)
-  if (!isset($field_config['node']['article'])) {
-    $field_config['node']['article'] = [];
-  }
-
-  $article_fields = [
-    'field_subtitle' => ['enabled' => true],
-    'field_header' => ['enabled' => true],
-    'field_footer' => ['enabled' => true],
-    'field_gallery' => ['enabled' => true],
-    'field_attachments' => ['enabled' => true],
-    'field_spip_id' => ['enabled' => true],
-    'field_spip_url' => ['enabled' => true],
-  ];
-
-  $has_changes = FALSE;
-  foreach ($article_fields as $field_name => $field_settings) {
-    // Only add field if it doesn't already exist in the configuration
-    if (!isset($field_config['node']['article'][$field_name])) {
-      $field_config['node']['article'][$field_name] = $field_settings;
-      $has_changes = TRUE;
-    }
-  }
-
-  // Configure Project Page fields (only if not already configured)
-  if (!isset($field_config['node']['project_page'])) {
-    $field_config['node']['project_page'] = [
-      'field_subtitle' => ['enabled' => true],
-      'field_header' => ['enabled' => true],
-      'field_footer' => ['enabled' => true],
-      'field_image' => ['enabled' => true],
-      'field_start_end' => ['enabled' => true],
-      'field_spip_id' => ['enabled' => true],
-      'field_spip_url' => ['enabled' => true],
-      'field_tags' => ['enabled' => true],
-    ];
-    $has_changes = TRUE;
-  }
+  // Force configure all fields for all content types (ensures featured_image is always enabled)
+  _uic_config_force_graphql_field_config($entity_config, $field_config);
+  $has_changes = TRUE;
 
   // Save the configuration only if there are changes
   if ($has_changes) {
@@ -218,5 +191,71 @@ function uic_config_configure_graphql_compose() {
 
     // Clear GraphQL schema cache
     \Drupal::service('cache_tags.invalidator')->invalidateTags(['graphql_compose_schema']);
+  }
+}
+
+/**
+ * Force configure GraphQL fields for all content types.
+ */
+function _uic_config_force_graphql_field_config(array &$entity_config, array &$field_config): void {
+  // Ensure all entity types are configured
+  $entity_config['node'] = $entity_config['node'] ?? [];
+  
+  // Configure entity types
+  $entity_types = ['article', 'activity_page', 'project_page'];
+  foreach ($entity_types as $bundle) {
+    $entity_config['node'][$bundle] = [
+      'enabled' => true,
+      'query_load_enabled' => true,
+      'edges_enabled' => true,
+      'routes_enabled' => true,
+    ];
+  }
+
+  // Ensure field configuration structure
+  $field_config['node'] = $field_config['node'] ?? [];
+  
+  // Configure fields for each content type
+  $content_type_fields = [
+    'article' => [
+      'field_subtitle' => ['enabled' => true],
+      'field_featured_image' => ['enabled' => true],
+      'field_header' => ['enabled' => true],
+      'field_footer' => ['enabled' => true],
+      'field_gallery' => ['enabled' => true],
+      'field_attachments' => ['enabled' => true],
+      'field_tags' => ['enabled' => true], // Default Drupal 10 field
+      'field_spip_id' => ['enabled' => true],
+      'field_spip_url' => ['enabled' => true],
+    ],
+    'activity_page' => [
+      'field_subtitle' => ['enabled' => true],
+      'field_featured_image' => ['enabled' => true],
+      'field_header' => ['enabled' => true],
+      'field_footer' => ['enabled' => true],
+      'field_gallery' => ['enabled' => true],
+      'field_attachments' => ['enabled' => true],
+      'field_spip_id' => ['enabled' => true],
+      'field_spip_url' => ['enabled' => true],
+    ],
+    'project_page' => [
+      'field_subtitle' => ['enabled' => true],
+      'field_featured_image' => ['enabled' => true],
+      'field_header' => ['enabled' => true],
+      'field_footer' => ['enabled' => true],
+      'field_image' => ['enabled' => true],
+      'field_start_end' => ['enabled' => true],
+      'field_spip_id' => ['enabled' => true],
+      'field_spip_url' => ['enabled' => true],
+      'field_tags' => ['enabled' => true],
+    ],
+  ];
+
+  foreach ($content_type_fields as $bundle => $fields) {
+    $field_config['node'][$bundle] = $field_config['node'][$bundle] ?? [];
+    foreach ($fields as $field_name => $field_settings) {
+      // Force enable all fields (overwrite existing config)
+      $field_config['node'][$bundle][$field_name] = $field_settings;
+    }
   }
 }

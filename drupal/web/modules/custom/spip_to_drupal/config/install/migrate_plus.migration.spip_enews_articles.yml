@@ -99,24 +99,19 @@ process:
   # SPIP ID (unique identifier)
   field_spip_id: id
     
-  # Image principale depuis logourl (si présent)
-  # - Référence un fichier déjà présent dans public://images/spip via son filename
-  # - Nécessite que les fichiers soient indexés dans file_managed (voir script index_spip_images.sh)
-  field_image/target_id:
-    - plugin: spip_url_to_media
-      source: logourl
-      base_url: 'https://uic.org/com/'
-      destination_scheme: 'public://'
-      destination_subdir: 'spip/images'
-      reuse_existing: true
-      media_bundle: 'image'
-      media_file_field: 'field_media_image'
-      allowed_extensions: ['jpg','jpeg','png','gif','webp']
-  field_image/alt:
+  # Image principale depuis logourl -> Media entity dans field_featured_image
+  field_featured_image:
     - plugin: skip_on_empty
       source: logourl
       method: process
-    - plugin: spip_url_to_alt
+    - plugin: spip_logourl_to_media_id
+      base_url: 'https://uic.org/com/'
+      destination_scheme: 'public://'
+      destination_subdir: 'spip/images'
+      media_bundle: 'image'
+      media_file_field: 'field_media_image'
+      reuse_existing: true
+      allowed_extensions: ['jpg','jpeg','png','gif','webp']
 
   # Tags - split by semicolon and create/reference taxonomy terms
   field_tags:

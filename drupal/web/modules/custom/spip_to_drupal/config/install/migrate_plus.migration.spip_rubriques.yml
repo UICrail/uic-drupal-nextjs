@@ -67,22 +67,19 @@ process:
 
   field_spip_url: formerurl
 
-  field_image/target_id:
-    - plugin: spip_extract_img_src
-      source: logourl
-    - plugin: spip_url_to_media
-      base_url: 'https://uic.org/'
-      destination_scheme: 'public://'
-      destination_subdir: 'spip/images'
-      reuse_existing: true
-      media_bundle: 'image'
-      media_file_field: 'field_media_image'
-      allowed_extensions: ['jpg','jpeg','png','gif','webp']
-  field_image/alt:
+  # Image principale depuis logourl -> Media entity dans field_featured_image
+  field_featured_image:
     - plugin: skip_on_empty
       source: logourl
       method: process
-    - plugin: spip_url_to_alt
+    - plugin: spip_logourl_to_media_id
+      base_url: 'https://uic.org/'
+      destination_scheme: 'public://'
+      destination_subdir: 'spip/images'
+      media_bundle: 'image'
+      media_file_field: 'field_media_image'
+      reuse_existing: true
+      allowed_extensions: ['jpg','jpeg','png','gif','webp']
 
   field_tags:
     - plugin: skip_on_empty
