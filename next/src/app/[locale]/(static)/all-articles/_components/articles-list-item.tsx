@@ -25,14 +25,18 @@ export function ArticleListItem({ article }: ArticleListItemProps) {
         "border-primary-200 bg-primary-50 dark:bg-primary-900/20",
       )}
     >
-      {article.featuredImage && (
+      {(article.featuredImage?.mediaImage || article.image) && (
         <div className="relative aspect-video overflow-hidden">
           <Image
-            src={article.featuredImage.mediaImage.url}
+            src={article.featuredImage?.mediaImage?.url || article.image?.url}
             width={500}
             height={300}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-            alt={article.featuredImage.mediaImage.alt}
+            alt={
+              article.featuredImage?.mediaImage?.alt ||
+              article.image?.alt ||
+              article.title
+            }
           />
           {article.sticky && (
             <div className="absolute right-2 top-2 h-2 w-2 rounded-full bg-cyan-500"></div>
@@ -53,6 +57,25 @@ export function ArticleListItem({ article }: ArticleListItemProps) {
         <p className="line-clamp-3 flex-1 text-sm text-gray-700 dark:text-gray-300">
           {article.excerpt}
         </p>
+
+        {/* Tags */}
+        {Array.isArray(article.tags) && article.tags.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-1">
+            {article.tags.slice(0, 3).map((tag) => (
+              <span
+                key={tag.id}
+                className="rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-300"
+              >
+                {tag.name}
+              </span>
+            ))}
+            {article.tags.length > 3 && (
+              <span className="rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-500 dark:bg-gray-700 dark:text-gray-400">
+                +{article.tags.length - 3}
+              </span>
+            )}
+          </div>
+        )}
       </div>
     </Link>
   );

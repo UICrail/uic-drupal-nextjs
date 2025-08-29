@@ -44,8 +44,13 @@ export const FRAGMENT_NODE_ARTICLE = graphql(`
     attachments {
       ...FragmentMediaDocument
     }
-    image {
-      ...FragmentImage
+    featuredImage {
+      ...FragmentMediaImage
+    }
+    tags {
+      id
+      name
+      path
     }
     author {
       __typename
@@ -129,6 +134,11 @@ export const FRAGMENT_ARTICLE_TEASER = graphql(`
     excerpt
     created {
       timestamp
+    }
+    tags {
+      id
+      name
+      path
     }
     author {
       __typename

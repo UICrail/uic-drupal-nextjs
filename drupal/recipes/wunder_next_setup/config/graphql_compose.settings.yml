@@ -69,7 +69,9 @@ entity_config:
       enabled: true
   taxonomy_term:
     tags:
-      enabled: false
+      enabled: true
+      query_load_enabled: true
+      edges_enabled: true
   user:
     user:
       enabled: true
