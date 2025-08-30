@@ -39,6 +39,9 @@ process:
       base_url: 'https://uic.org/'
       doc_path_pattern: 'IMG'
       documents_index_url: 'https://uic.org/?page=documents_exportxml'
+      documents_index_urls:
+        - 'https://uic.org/?page=documents_exportxml'
+        - 'https://uic.org/com/?page=documents_exportxml'
       documents_id_param: 'id_document'
     - plugin: spip_html_transform
     - plugin: spip_html_media_embed
@@ -62,6 +65,9 @@ process:
       base_url: 'https://uic.org/'
       doc_path_pattern: 'IMG'
       documents_index_url: 'https://uic.org/?page=documents_exportxml'
+      documents_index_urls:
+        - 'https://uic.org/?page=documents_exportxml'
+        - 'https://uic.org/com/?page=documents_exportxml'
       documents_id_param: 'id_document'
     - plugin: spip_html_transform
     - plugin: spip_html_media_embed
@@ -114,6 +120,10 @@ process:
       source: images
       base_url: 'https://uic.org/'
       documents_index_url: 'https://uic.org/?page=documents_exportxml'
+      documents_index_urls:
+        - 'https://uic.org/?page=documents_exportxml'
+        - 'https://uic.org/com/?page=documents_exportxml'
+      id_prefixes: 'doc,comdoc'
       documents_id_param: 'id_document'
       destination_scheme: 'public://'
       destination_subdir: 'spip/documents'
@@ -128,6 +138,10 @@ process:
       source: portfolio
       base_url: 'https://uic.org/'
       documents_index_url: 'https://uic.org/?page=documents_exportxml'
+      documents_index_urls:
+        - 'https://uic.org/?page=documents_exportxml'
+        - 'https://uic.org/com/?page=documents_exportxml'
+      id_prefixes: 'doc,comdoc'
       documents_id_param: 'id_document'
       destination_scheme: 'public://'
       destination_subdir: 'spip/documents'

@@ -412,6 +412,28 @@ class SpipMigrationForm extends FormBase {
         'details' => [],
       ];
     }
+    else {
+      // Ensure expected keys exist even if results was pre-populated
+      // by another operation with a different shape.
+      if (!is_array($context['results'])) {
+        $context['results'] = [
+          'completed' => 0,
+          'failed' => 0,
+          'details' => [],
+        ];
+      }
+      else {
+        if (!array_key_exists('completed', $context['results'])) {
+          $context['results']['completed'] = 0;
+        }
+        if (!array_key_exists('failed', $context['results'])) {
+          $context['results']['failed'] = 0;
+        }
+        if (!array_key_exists('details', $context['results']) || !is_array($context['results']['details'])) {
+          $context['results']['details'] = [];
+        }
+      }
+    }
 
     if (!empty($result['status']) && $result['status'] === 'completed') {
       $context['results']['completed']++;
@@ -451,7 +473,8 @@ class SpipMigrationForm extends FormBase {
   public function handleRollback(array &$form, FormStateInterface $form_state) {
     try {
       $source_type = $form_state->getValue('source_type');
-      $migration_id = ($source_type === 'file') ? 'spip_enews_articles_local' : 'spip_enews_articles';
+      $destination_bundle = $form_state->getValue('destination_bundle') ?: 'article';
+      $migration_id = $this->determineMigrationId($form_state, $source_type, $destination_bundle);
 
       $migration = $this->migrationPluginManager->createInstance($migration_id);
       
@@ -480,7 +503,8 @@ class SpipMigrationForm extends FormBase {
   public function handleReset(array &$form, FormStateInterface $form_state) {
     try {
       $source_type = $form_state->getValue('source_type');
-      $migration_id = ($source_type === 'file') ? 'spip_enews_articles_local' : 'spip_enews_articles';
+      $destination_bundle = $form_state->getValue('destination_bundle') ?: 'article';
+      $migration_id = $this->determineMigrationId($form_state, $source_type, $destination_bundle);
 
       $migration = $this->migrationPluginManager->createInstance($migration_id);
       
@@ -678,8 +702,9 @@ class SpipMigrationForm extends FormBase {
     
     try {
       $migrations = [
-        'spip_enews_articles' => 'URL Import',
-        'spip_enews_articles_local' => 'File Import',
+        'spip_enews_articles' => 'eNews (URL Import)',
+        'spip_enews_articles_local' => 'eNews (File Import)',
+        'spip_rubriques' => 'Rubriques → Activity pages',
       ];
 
       foreach ($migrations as $migration_id => $label) {
@@ -763,6 +788,10 @@ class SpipMigrationForm extends FormBase {
     $selected = $form_state->getValue('migration_id');
     if (!empty($selected)) {
       return (string) $selected;
+    }
+    // Auto-map bundles to migrations. Preserve existing eNews behavior.
+    if ($bundle === 'activity_page') {
+      return 'spip_rubriques';
     }
     if ($source_type === 'file') {
       return ($bundle === 'page') ? 'spip_enews_pages_local' : 'spip_enews_articles_local';

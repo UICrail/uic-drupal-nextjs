@@ -38,21 +38,27 @@ class SpipDocToEmbed extends ProcessPluginBase {
     $config = $this->configuration + [];
     $base_url = isset($config['base_url']) ? (string) $config['base_url'] : '';
     $doc_path_pattern = isset($config['doc_path_pattern']) ? (string) $config['doc_path_pattern'] : 'IMG';
+    // Support multiple endpoints; keep single-key for backward compatibility.
     $documents_index_url = isset($config['documents_index_url']) ? (string) $config['documents_index_url'] : '';
+    $documents_index_urls = $config['documents_index_urls'] ?? [];
+    if (is_string($documents_index_urls) && trim($documents_index_urls) !== '') {
+      $documents_index_urls = array_filter(array_map('trim', explode(',', $documents_index_urls)));
+    }
+    if (!is_array($documents_index_urls)) { $documents_index_urls = []; }
+    if ($documents_index_url !== '') { array_unshift($documents_index_urls, $documents_index_url); }
     $documents_id_param = isset($config['documents_id_param']) ? (string) $config['documents_id_param'] : 'id_document';
 
-    // Lazy-load the document map once per request if an index URL is provided.
+    // Lazy-load the document map once per request if index URLs are provided.
     if (self::$documentUrlMap === null) {
       self::$documentUrlMap = [];
-      if ($documents_index_url !== '') {
+      foreach ($documents_index_urls as $endpoint) {
         try {
-          $map = $this->buildDocumentUrlMap($documents_index_url);
-          if (is_array($map)) {
-            self::$documentUrlMap = $map;
-            \Drupal::logger('spip_to_drupal')->info('Loaded SPIP documents index: @count entries', ['@count' => count($map)]);
+          $map = $this->buildDocumentUrlMap($endpoint);
+          if (is_array($map) && !empty($map)) {
+            self::$documentUrlMap = self::$documentUrlMap + $map;
           }
         } catch (\Throwable $e) {
-          \Drupal::logger('spip_to_drupal')->warning('Failed loading SPIP documents index: @msg', ['@msg' => $e->getMessage()]);
+          // Skip; per-id lookups will be used.
         }
       }
     }
@@ -71,9 +77,12 @@ class SpipDocToEmbed extends ProcessPluginBase {
         $url = (string) self::$documentUrlMap[$id];
       }
       // Fallback: heuristic relative path
-      if ($url === '' && !empty($documents_index_url)) {
-        // Try single lookup to avoid loading full index
-        $url = $this->fetchSingleDocumentUrl($documents_index_url, $documents_id_param, $id);
+      if ($url === '' && !empty($documents_index_urls)) {
+        // Try single lookups across configured endpoints.
+        foreach ($documents_index_urls as $endpoint) {
+          $url = $this->fetchSingleDocumentUrl($endpoint, $documents_id_param, $id);
+          if ($url !== '') { break; }
+        }
       }
       if ($url === '') {
         $relative = rtrim($doc_path_pattern, '/') . '/doc' . $id;
@@ -200,6 +209,27 @@ class SpipDocToEmbed extends ProcessPluginBase {
     } catch (\Throwable $e) {
       return '';
     }
+  }
+
+  protected function fetchSingleDocumentUrlWithFallback(string $base_index_url, string $id_param, string $id): string {
+    $candidates = [$base_index_url];
+    if (strpos($base_index_url, '/com/') === FALSE) {
+      $parts = parse_url($base_index_url);
+      if (!empty($parts['scheme']) && !empty($parts['host'])) {
+        $port = isset($parts['port']) ? ':' . $parts['port'] : '';
+        $path = isset($parts['path']) ? $parts['path'] : '';
+        $query = isset($parts['query']) ? '?' . $parts['query'] : '';
+        $com_base = $parts['scheme'] . '://' . $parts['host'] . $port . '/com' . $path . $query;
+        $candidates[] = $com_base;
+      }
+    }
+    foreach ($candidates as $candidate) {
+      $url = $this->fetchSingleDocumentUrl($candidate, $id_param, $id);
+      if ($url !== '') {
+        return $url;
+      }
+    }
+    return '';
   }
 }
 

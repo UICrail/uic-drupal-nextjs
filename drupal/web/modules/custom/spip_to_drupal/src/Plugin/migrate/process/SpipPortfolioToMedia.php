@@ -34,7 +34,15 @@ class SpipPortfolioToMedia extends ProcessPluginBase {
 
     $config = $this->configuration + [];
     $base_url = (string) ($config['base_url'] ?? '');
+    // Support multiple endpoints; keep single-key for backward compatibility.
     $documents_index_url = (string) ($config['documents_index_url'] ?? '');
+    $documents_index_urls = $config['documents_index_urls'] ?? [];
+    if (is_string($documents_index_urls) && trim($documents_index_urls) !== '') {
+      // Allow comma-separated list
+      $documents_index_urls = array_filter(array_map('trim', explode(',', $documents_index_urls)));
+    }
+    if (!is_array($documents_index_urls)) { $documents_index_urls = []; }
+    if ($documents_index_url !== '') { array_unshift($documents_index_urls, $documents_index_url); }
     $documents_id_param = (string) ($config['documents_id_param'] ?? 'id_document');
     $destination_scheme = rtrim((string) ($config['destination_scheme'] ?? 'public://'), ':/') . '://';
     $destination_subdir = trim((string) ($config['destination_subdir'] ?? 'spip/documents'), '/');
@@ -46,20 +54,34 @@ class SpipPortfolioToMedia extends ProcessPluginBase {
       $allowed_extensions = array_filter(array_map('trim', explode(',', $allowed_extensions)));
     }
 
-    // Build doc map once per request if available.
+    // ID prefixes to recognize in portfolio values (e.g., comdoc123, doc123).
+    $id_prefixes = $config['id_prefixes'] ?? ['comdoc', 'doc'];
+    if (is_string($id_prefixes) && trim($id_prefixes) !== '') {
+      $id_prefixes = array_filter(array_map('trim', explode(',', $id_prefixes)));
+    }
+    if (!is_array($id_prefixes) || empty($id_prefixes)) { $id_prefixes = ['comdoc', 'doc']; }
+
+    // Build doc map once per request if available. Try all endpoints, merge.
     if (self::$documentUrlMap === null) {
       self::$documentUrlMap = [];
-      if ($documents_index_url !== '') {
+      foreach ($documents_index_urls as $endpoint) {
         try {
-          self::$documentUrlMap = $this->buildDocumentUrlMap($documents_index_url);
+          $map = $this->buildDocumentUrlMap($endpoint);
+          if (!empty($map)) {
+            self::$documentUrlMap = self::$documentUrlMap + $map;
+          }
         } catch (\Throwable $e) {
-          \Drupal::logger('spip_to_drupal')->warning('Portfolio: failed to load documents index: @msg', ['@msg' => $e->getMessage()]);
+          // Skip; rely on per-id lookups.
         }
+      }
+      if (empty(self::$documentUrlMap)) {
+        \Drupal::logger('spip_to_drupal')->info('Portfolio: no full documents index available; using per-id lookups.');
       }
     }
 
-    // Extract numeric doc ids from patterns like comdoc123; doc123; comdoc#123; doc#123;
-    preg_match_all('/(?:comdoc#?|doc#?)(\d+)/i', $value, $matches);
+    // Extract numeric doc ids from configured prefixes, e.g., comdoc123; doc123; comdoc#123; doc#123;
+    $prefix_pattern = implode('|', array_map(function($p){ return preg_quote($p, '/'); }, $id_prefixes));
+    preg_match_all('/(?:' . $prefix_pattern . ')#?(\d+)/i', $value, $matches);
     $doc_ids = array_unique($matches[1] ?? []);
     if (empty($doc_ids)) {
       return NULL;
@@ -101,8 +123,12 @@ class SpipPortfolioToMedia extends ProcessPluginBase {
       if (isset(self::$documentUrlMap[$doc_id])) {
         $url = (string) self::$documentUrlMap[$doc_id];
       }
-      if ($url === '' && !empty($documents_index_url)) {
-        $url = $this->fetchSingleDocumentUrl($documents_index_url, $documents_id_param, (string) $doc_id);
+      // Prefer lightweight per-id lookup across configured endpoints.
+      if ($url === '' && !empty($documents_index_urls)) {
+        foreach ($documents_index_urls as $endpoint) {
+          $url = $this->fetchSingleDocumentUrl($endpoint, $documents_id_param, (string) $doc_id);
+          if ($url !== '') { break; }
+        }
       }
       if ($url === '') {
         // Fallback predictable path if no index map.
@@ -270,6 +296,30 @@ class SpipPortfolioToMedia extends ProcessPluginBase {
     } catch (\Throwable $e) {
       return [];
     }
+  }
+
+  protected function fetchSingleDocumentUrlWithFallback(string $base_index_url, string $id_param, string $id): string {
+    // Try provided base, then try an alternate '/com/' base if present on host.
+    $candidates = [$base_index_url];
+    // Build a /com/ variant only if not already containing '/com/'.
+    if (strpos($base_index_url, '/com/') === FALSE) {
+      $parts = parse_url($base_index_url);
+      if (!empty($parts['scheme']) && !empty($parts['host'])) {
+        $port = isset($parts['port']) ? ':' . $parts['port'] : '';
+        $path = isset($parts['path']) ? $parts['path'] : '';
+        $query = isset($parts['query']) ? '?' . $parts['query'] : '';
+        $com_base = $parts['scheme'] . '://' . $parts['host'] . $port . '/com' . $path . $query;
+        $candidates[] = $com_base;
+      }
+    }
+
+    foreach ($candidates as $candidate) {
+      $url = $this->fetchSingleDocumentUrl($candidate, $id_param, $id);
+      if ($url !== '') {
+        return $url;
+      }
+    }
+    return '';
   }
 
   protected function fetchSingleDocumentUrl(string $base_index_url, string $id_param, string $id): string {
