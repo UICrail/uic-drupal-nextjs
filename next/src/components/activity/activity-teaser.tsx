@@ -12,6 +12,9 @@ export interface ActivityTeaserItem {
   title: string;
   created?: { timestamp: number } | null;
   header?: { value?: string | null; processed?: string | null } | null;
+  featuredImage?: {
+    mediaImage?: { url: string; alt?: string | null } | null;
+  } | null;
   gallery?:
     | { mediaImage?: { url: string; alt?: string | null } | null }[]
     | null;
@@ -27,7 +30,10 @@ export function ActivityTeaser({ activity }: ActivityTeaserProps) {
     ? formatDateTimestamp(activity.created.timestamp, "en")
     : undefined;
 
-  const image = activity.gallery?.[0]?.mediaImage || null;
+  const image =
+    activity.featuredImage?.mediaImage ||
+    activity.gallery?.[0]?.mediaImage ||
+    null;
 
   const CardInner = (
     <>

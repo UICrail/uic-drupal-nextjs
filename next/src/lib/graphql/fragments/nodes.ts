@@ -162,6 +162,9 @@ export const FRAGMENT_NODE_ACTIVITY_PAGE = graphql(`
     footer {
       ...FragmentText
     }
+    featuredImage {
+      ...FragmentMediaImage
+    }
     gallery {
       ... on MediaImage {
         ...FragmentMediaImage
@@ -196,6 +199,9 @@ export const FRAGMENT_ACTIVITY_TEASER = graphql(`
     }
     header {
       ...FragmentText
+    }
+    featuredImage {
+      ...FragmentMediaImage
     }
     gallery {
       ... on MediaImage {

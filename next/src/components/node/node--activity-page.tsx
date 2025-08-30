@@ -1,4 +1,5 @@
 import { useTranslations } from "next-intl";
+import Image from "next/image";
 
 import { GalleryImageDialog } from "@/components/media/gallery-image-dialog";
 import { MediaDocument } from "@/components/media/media--document";
@@ -34,6 +35,27 @@ export function NodeActivityPage({
           </p>
         )}
       </header>
+
+      {page.featuredImage?.mediaImage && (
+        <figure className="mb-8">
+          <div className="relative aspect-video overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800">
+            <Image
+              src={page.featuredImage.mediaImage.url}
+              width={page.featuredImage.mediaImage.width || 1200}
+              height={page.featuredImage.mediaImage.height || 675}
+              alt={page.featuredImage.mediaImage.alt || page.title}
+              className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+              priority
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
+            />
+          </div>
+          {page.featuredImage.mediaImage.title && (
+            <figcaption className="mt-3 text-center text-sm italic text-gray-600 dark:text-gray-400">
+              {page.featuredImage.mediaImage.title}
+            </figcaption>
+          )}
+        </figure>
+      )}
 
       {(page.header?.processed || page.header?.value) && (
         <div className="prose prose-lg mx-auto mb-8 max-w-none dark:prose-invert">
