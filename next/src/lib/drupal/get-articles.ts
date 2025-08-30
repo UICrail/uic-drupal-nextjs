@@ -1,6 +1,7 @@
 import { drupalClientViewer } from "@/lib/drupal/drupal-client";
 import type { FragmentArticleTeaserFragment } from "@/lib/gql/graphql";
-import { LISTING_ARTICLES } from "@/lib/graphql/queries";
+import { LISTING_ACTIVITIES_CONNECTION, LISTING_ARTICLES } from "@/lib/graphql/queries";
+import type { RequestDocument } from "graphql-request";
 
 import { routing } from "@/i18n/routing";
 
@@ -62,5 +63,99 @@ export const getLatestArticlesItems = async (
   return {
     totalPages,
     articles: nodes,
+  };
+};
+
+type GetActivitiesArgs = {
+  first?: number;
+  after?: string | null;
+  last?: number;
+  before?: string | null;
+  locale?: string;
+};
+
+type ActivityTeaser = {
+  id: string;
+  path?: string | null;
+  title: string;
+  created?: { timestamp: number };
+  header?: { value?: string | null; processed?: string | null };
+  gallery?: { mediaImage?: { url: string; alt?: string | null } }[];
+  author?: { __typename?: string; name?: string | null } | null;
+};
+
+export const getActivities = async ({
+  first = 20,
+  after = null,
+  last,
+  before,
+  locale = routing.defaultLocale,
+}: GetActivitiesArgs): Promise<{
+  nodes: ActivityTeaser[];
+  pageInfo: {
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+    startCursor: string | null;
+    endCursor: string | null;
+  };
+}> => {
+  let nodes: ActivityTeaser[] = [];
+  let pageInfo = {
+    hasNextPage: false,
+    hasPreviousPage: false,
+    startCursor: null as string | null,
+    endCursor: null as string | null,
+  };
+  try {
+    const result = (await drupalClientViewer.doGraphQlRequest(
+      (LISTING_ACTIVITIES_CONNECTION as unknown) as RequestDocument,
+      {
+        langcode: locale,
+        first,
+        after,
+        last,
+        before,
+      },
+    )) as unknown as {
+      nodeActivityPages?: {
+        nodes?: ActivityTeaser[];
+        pageInfo?: typeof pageInfo;
+      };
+    };
+
+    if (result?.nodeActivityPages) {
+      nodes = (result.nodeActivityPages.nodes || []) as ActivityTeaser[];
+      pageInfo = {
+        hasNextPage: !!result.nodeActivityPages.pageInfo?.hasNextPage,
+        hasPreviousPage: !!result.nodeActivityPages.pageInfo?.hasPreviousPage,
+        startCursor: result.nodeActivityPages.pageInfo?.startCursor ?? null,
+        endCursor: result.nodeActivityPages.pageInfo?.endCursor ?? null,
+      };
+    }
+  } catch (error) {
+    console.error(error);
+  }
+
+  return {
+    nodes,
+    pageInfo,
+  };
+};
+
+export const getLatestActivitiesItems = async (
+  args: GetActivitiesArgs,
+): Promise<{
+  activities: ActivityTeaser[];
+  pageInfo: {
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+    startCursor: string | null;
+    endCursor: string | null;
+  };
+}> => {
+  const { nodes, pageInfo } = await getActivities(args);
+  return {
+    activities: nodes,
+    pageInfo,
   };
 };

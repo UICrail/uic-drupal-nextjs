@@ -3,6 +3,7 @@ import { draftMode } from "next/headers";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { ArticleTeasers } from "@/components/article/article-teasers";
+import { ActivityTeasers } from "@/components/activity/activity-teasers";
 import { ContactList } from "@/components/contact-list";
 import { ContactForm } from "@/components/forms/contact-form";
 import { LogoStrip } from "@/components/logo-strip";
@@ -10,6 +11,7 @@ import { Node } from "@/components/node";
 import { Separator } from "@/components/ui/separator";
 import { REVALIDATE_LONG } from "@/lib/constants";
 import { getArticleTeasers } from "@/lib/drupal/get-article-teasers";
+import { getLatestActivitiesItems } from "@/lib/drupal/get-articles";
 import { getNodeByPathQuery } from "@/lib/drupal/get-node";
 import { getNodeMetadata } from "@/lib/drupal/get-node-metadata";
 import { extractEntityFromRouteQueryResult } from "@/lib/graphql/utils";
@@ -39,10 +41,12 @@ export default async function FrontPage({
 
   // Here we fetch the frontpage node and the latest 3 promoted articles in parallel to
   // avoid unnecessary delays in rendering
-  const [nodeByPathResult, articleTeasers] = await Promise.all([
-    getNodeByPathQuery(path, locale),
-    getArticleTeasers({ limit: 3, locale, sticky: true }),
-  ]);
+  const [nodeByPathResult, articleTeasers, activitiesResult] =
+    await Promise.all([
+      getNodeByPathQuery(path, locale),
+      getArticleTeasers({ limit: 3, locale, sticky: true }),
+      getLatestActivitiesItems({ first: 3, locale }),
+    ]);
 
   // Extract the frontpage node from the query result
   const frontpage = extractEntityFromRouteQueryResult(nodeByPathResult);
@@ -66,6 +70,11 @@ export default async function FrontPage({
       <ArticleTeasers
         heading={t("promoted-articles")}
         articles={articleTeasers}
+      />
+      <Separator className="mx-auto my-9 max-w-4xl" />
+      <ActivityTeasers
+        heading={t("activities")}
+        activities={activitiesResult.activities}
       />
       <ContactList />
       <LogoStrip />

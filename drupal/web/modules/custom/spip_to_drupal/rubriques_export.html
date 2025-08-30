@@ -1,23 +1,22 @@
-#CACHE{0}[(#HTTP_HEADER{Content-type: text/xml[; charset=(#CHARSET)]})]
-<?xml version="1.0"[ encoding="(#CHARSET)"]?>
+#CACHE{0}[(#HTTP_HEADER{Content-type: text/xml[; charset=(#CHARSET)]})]<?xml version="1.0"[ encoding="(#CHARSET)"]?>
 <!DOCTYPE articles>
-[(#REM)  145, 13, 157, 30, 42, 26, 48, 22, 8, 5]
 <rubriques xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink">
-    [(#SET{num_page,[(#ENV{num_page}|intval|?{[(#ENV{num_page}|intval)],1})]})]
-[(#SET{par_page,[(#ENV{par_page}|intval|?{[(#ENV{par_page}|intval)],10})]})]
-[(#SET{debut,[(#GET{num_page}|moins{1}|mult{#GET{par_page}})]})]
+	[(#SET{num_page,[(#ENV{num_page}|intval|?{[(#ENV{num_page}|intval)],1})]})]
+	[(#SET{par_page,[(#ENV{par_page}|intval|?{[(#ENV{par_page}|intval)],10})]})]
+	[(#SET{debut,[(#GET{num_page}|moins{1}|mult{#GET{par_page}})]})]
+  
     <BOUCLE_rublogo(RUBRIQUES){id_rubrique=145}>
-        [(#SET{logourl,#LOGO_RUBRIQUE}]
+        [(#SET{logourl,[(#LOGO_RUBRIQUE|extraire_attribut{src})]})]
     </BOUCLE_rublogo>
-      <BOUCLE_rub(RUBRIQUES){id_secteur IN 145 } {#GET{debut},#GET{par_page}} {par id_rubrique}>
+      <BOUCLE_rub(RUBRIQUES){id_secteur IN 145, 13, 157, 30, 42, 26, 48, 22, 8, 5 } {#GET{debut},#GET{par_page}} {par id_rubrique}>
 
         <rubrique xml:id="#ID_RUBRIQUE">
 		            <id>rub#ID_RUBRIQUE</id>
             <parentid>rub#ID_PARENT</parentid>
-            <auteurs>#AUTEUR</auteurs>
-            <logo><img class='spip_logo spip_logos' alt="" src="local/cache-vignettes/L200xH48/rubon5-d3b15.jpg?1705437626" width='200' height='48' /></logo>
+            <auteurs></auteurs>
+            <logo></logo>
             <logourl>#GET{logourl}</logourl>
-            <titre>#TITRE</titre>
+            <titre>[(#TITRE|texte_backend)]</titre>
 	    <soustitre>#SOUSTITRE</soustitre>
             <pub>#DATE</pub>
             <desc>
@@ -28,7 +27,12 @@
             </texte>
             <group1><BOUCLE_keywords(MOTS) {id_rubrique}{id_groupe=1}>[(#TITRE_MOT|extraire_multi{'en'}|trim);]</BOUCLE_keywords></group1>
 	    <themes><BOUCLE_keywords2(MOTS) {id_rubrique}{id_groupe=1}>[(#ID_MOT);]</BOUCLE_keywords2></themes>
-			<portfolio><BOUCLE_docs(DOCUMENTS){id_rubrique}{mode=document}{doublons}>doc#ID_DOCUMENT;</BOUCLE_docs></portfolio>
+          				<images>
+					<BOUCLE_docs1(DOCUMENTS){id_article}{doublons}{media=image}>doc#ID_DOCUMENT;</BOUCLE_docs1>
+				</images>
+				<portfolio>
+					<BOUCLE_docs(DOCUMENTS){id_article}{mode=document}{doublons}>doc#ID_DOCUMENT;</BOUCLE_docs>
+				</portfolio>
         </rubrique>
         </BOUCLE_rub>
 </rubriques>

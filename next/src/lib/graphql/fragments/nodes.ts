@@ -19,6 +19,7 @@ export const FRAGMENT_NODE_UNION = graphql(`
     metatag {
       ...FragmentMetaTag
     }
+    ...FragmentNodeActivityPage
     ...FragmentNodeArticle
     ...FragmentNodeFrontpage
     ...FragmentNodePage
@@ -139,6 +140,67 @@ export const FRAGMENT_ARTICLE_TEASER = graphql(`
       id
       name
       path
+    }
+    author {
+      __typename
+      ... on User {
+        ...FragmentUser
+      }
+    }
+  }
+`);
+
+export const FRAGMENT_NODE_ACTIVITY_PAGE = graphql(`
+  fragment FragmentNodeActivityPage on NodeActivityPage {
+    sticky
+    header {
+      ...FragmentText
+    }
+    body {
+      ...FragmentTextSummary
+    }
+    footer {
+      ...FragmentText
+    }
+    gallery {
+      ... on MediaImage {
+        ...FragmentMediaImage
+      }
+    }
+    attachments {
+      ... on MediaDocument {
+        ...FragmentMediaDocument
+      }
+    }
+    author {
+      __typename
+      ... on User {
+        ...FragmentUser
+      }
+    }
+    subtitle
+    spipId
+    spipUrl
+  }
+`);
+
+export const FRAGMENT_ACTIVITY_TEASER = graphql(`
+  fragment FragmentActivityTeaser on NodeActivityPage {
+    __typename
+    id
+    path
+    title
+    sticky
+    created {
+      timestamp
+    }
+    header {
+      ...FragmentText
+    }
+    gallery {
+      ... on MediaImage {
+        ...FragmentMediaImage
+      }
     }
     author {
       __typename

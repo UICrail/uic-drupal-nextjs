@@ -32,7 +32,7 @@ export async function generateStaticParams({
   params: { locale },
 }: NodePageParams) {
   // TODO: Add the node types you want to generate static paths in the array below.
-  const nodeTypes = ["nodePages", "nodeArticles"];
+  const nodeTypes = ["nodePages", "nodeActivityPages", "nodeArticles"];
   const params = await getNodeStaticParams(nodeTypes, locale, 10);
   return params;
 }

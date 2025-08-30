@@ -41,6 +41,16 @@ export const GET_STATIC_PATHS = graphql(`
         path
       }
     }
+    nodeActivityPages(
+      first: $number
+      langcode: $langcode
+      sortKey: UPDATED_AT
+      reverse: true
+    ) {
+      nodes {
+        path
+      }
+    }
     nodeArticles(
       first: $number
       langcode: $langcode
@@ -89,6 +99,7 @@ export const GET_SITEMAP_NODES = graphql(`
         }
       }
       pageInfo {
+        offset
         page
         pageSize
         total
@@ -185,6 +196,37 @@ export const LISTING_ARTICLES = graphql(`
         page
         pageSize
         total
+      }
+    }
+  }
+`);
+
+export const LISTING_ACTIVITIES_CONNECTION = graphql(`
+  query ActivityListingConnection(
+    $langcode: String = "en"
+    $first: Int
+    $after: Cursor
+    $last: Int
+    $before: Cursor
+    $reverse: Boolean = false
+  ) {
+    nodeActivityPages(
+      first: $first
+      after: $after
+      last: $last
+      before: $before
+      langcode: $langcode
+      reverse: $reverse
+      sortKey: UPDATED_AT
+    ) {
+      nodes {
+        ...FragmentActivityTeaser
+      }
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
       }
     }
   }
