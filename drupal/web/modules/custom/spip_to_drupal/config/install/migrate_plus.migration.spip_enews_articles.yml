@@ -33,12 +33,22 @@ process:
       base_url: 'https://uic.org/com/'
       doc_path_pattern: 'IMG'
       documents_index_url: 'https://uic.org/com/?page=documents_exportxml'
+      documents_index_urls:
+        - 'https://uic.org/com/?page=documents_exportxml'
+        - 'https://uic.org/?page=documents_exportxml'
+      destination_scheme: 'public://'
+      destination_subdir: 'spip/documents'
+      reuse_existing: true
+      image_media_bundle: 'image'
+      image_media_field: 'field_media_image'
+      document_media_bundle: 'document'
+      document_media_field: 'field_media_document'
       documents_id_param: 'id_document'
     - plugin: spip_html_transform
     - plugin: spip_html_media_embed
       base_url: 'https://uic.org/com/'
       destination_scheme: 'public://'
-      destination_subdir: 'spip/images'
+      destination_subdir: 'com/images'
       reuse_existing: true
       use_media: true
       media_bundle: 'image'
@@ -65,6 +75,16 @@ process:
       base_url: 'https://uic.org/com/'
       doc_path_pattern: 'IMG'
       documents_index_url: 'https://uic.org/com/?page=documents_exportxml'
+      documents_index_urls:
+        - 'https://uic.org/com/?page=documents_exportxml'
+        - 'https://uic.org/?page=documents_exportxml'
+      destination_scheme: 'public://'
+      destination_subdir: 'spip/documents'
+      reuse_existing: true
+      image_media_bundle: 'image'
+      image_media_field: 'field_media_image'
+      document_media_bundle: 'document'
+      document_media_field: 'field_media_document'
       documents_id_param: 'id_document'
     - plugin: spip_html_transform
     - plugin: spip_html_media_embed
@@ -134,6 +154,10 @@ process:
       source: images
       base_url: 'https://uic.org/com/'
       documents_index_url: 'https://uic.org/com/?page=documents_exportxml'
+      documents_index_urls:
+        - 'https://uic.org/com/?page=documents_exportxml'
+        - 'https://uic.org/?page=documents_exportxml'
+      id_prefixes: 'comdoc,doc'
       documents_id_param: 'id_document'
       destination_scheme: 'public://'
       destination_subdir: 'spip/documents'
@@ -148,6 +172,10 @@ process:
       source: portfolio
       base_url: 'https://uic.org/com/'
       documents_index_url: 'https://uic.org/com/?page=documents_exportxml'
+      documents_index_urls:
+        - 'https://uic.org/com/?page=documents_exportxml'
+        - 'https://uic.org/?page=documents_exportxml'
+      id_prefixes: 'comdoc,doc'
       documents_id_param: 'id_document'
       destination_scheme: 'public://'
       destination_subdir: 'spip/documents'

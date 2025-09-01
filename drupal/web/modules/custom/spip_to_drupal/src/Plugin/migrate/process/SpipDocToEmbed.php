@@ -65,20 +65,30 @@ class SpipDocToEmbed extends ProcessPluginBase {
 
     $text = $value;
 
-    // Replace <doc123|center> and <img123|left> with <img src="..." class="..."> placeholders.
-    $text = preg_replace_callback('/<(doc|img)(\d+)(?:\|(left|center|right))?>/i', function ($m) use ($base_url, $doc_path_pattern, $documents_index_url, $documents_id_param) {
-      $type = strtolower($m[1]);
+    // Config for file/media creation and image-vs-document selection.
+    $image_extensions = $config['allowed_image_extensions'] ?? ['jpg','jpeg','png','gif','webp'];
+    if (is_string($image_extensions)) {
+      $image_extensions = array_filter(array_map('trim', explode(',', $image_extensions)));
+    }
+    $destination_scheme = rtrim((string) ($config['destination_scheme'] ?? 'public://'), ':/') . '://';
+    $destination_subdir = trim((string) ($config['destination_subdir'] ?? 'spip/documents'), '/');
+    $reuse_existing = (bool) ($config['reuse_existing'] ?? TRUE);
+    $image_media_bundle = (string) ($config['image_media_bundle'] ?? 'image');
+    $image_media_field = (string) ($config['image_media_field'] ?? 'field_media_image');
+    $document_media_bundle = (string) ($config['document_media_bundle'] ?? 'document');
+    $document_media_field = (string) ($config['document_media_field'] ?? 'field_media_document');
+
+    // Replace <doc123|center> and <img123|left> with <drupal-media> embeds.
+    $text = preg_replace_callback('/<(doc|img)(\d+)(?:\|(left|center|right))?>/i', function ($m) use ($base_url, $doc_path_pattern, $documents_index_urls, $documents_id_param, $image_extensions, $destination_scheme, $destination_subdir, $reuse_existing, $image_media_bundle, $image_media_field, $document_media_bundle, $document_media_field, $row) {
       $id = $m[2];
       $align = isset($m[3]) ? strtolower($m[3]) : '';
 
-      // Try exact URL from index map first.
+      // Resolve URL via cached map, per-id API lookup, or fallback heuristic.
       $url = '';
       if (is_array(self::$documentUrlMap) && isset(self::$documentUrlMap[$id])) {
         $url = (string) self::$documentUrlMap[$id];
       }
-      // Fallback: heuristic relative path
       if ($url === '' && !empty($documents_index_urls)) {
-        // Try single lookups across configured endpoints.
         foreach ($documents_index_urls as $endpoint) {
           $url = $this->fetchSingleDocumentUrl($endpoint, $documents_id_param, $id);
           if ($url !== '') { break; }
@@ -89,11 +99,35 @@ class SpipDocToEmbed extends ProcessPluginBase {
         $url = $this->buildAbsoluteUrl($relative, $base_url);
       }
 
+      // Determine type by extension; unknown => treat as document.
+      $path = parse_url($url, PHP_URL_PATH) ?: '';
+      $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+      $is_image = ($ext !== '' && in_array($ext, (array) $image_extensions, TRUE));
+
+      // Download/create File and ensure a Media entity, then return <drupal-media>.
+      $file = $this->ensureFileForUrl($url, $destination_scheme, $destination_subdir, $reuse_existing);
+      if ($file) {
+        $media = $this->ensureMediaForFile((int) $file->id(), $is_image ? $image_media_bundle : $document_media_bundle, $is_image ? $image_media_field : $document_media_field);
+        if ($media) {
+          // Keep track for later dedup in portfolio plugin.
+          try {
+            $mid = (int) $media->id();
+            if ($mid > 0) {
+              $existing = (array) $row->getTemporaryProperty('spip_embedded_media_ids');
+              if (!is_array($existing)) { $existing = []; }
+              $existing[$mid] = true;
+              $row->setTemporaryProperty('spip_embedded_media_ids', array_keys($existing));
+            }
+          } catch (\Throwable $e) {}
+          $align_attr = $align ? ' data-align="' . $align . '"' : '';
+          return '<drupal-media data-entity-type="media" data-entity-uuid="' . $media->uuid() . '"' . $align_attr . '></drupal-media>';
+        }
+      }
+
+      // Fallback to <img> placeholder if media creation fails.
       $class = $align ? ' class="spip_documents_' . $align . '"' : '';
       return '<img src="' . htmlspecialchars($url, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '"' . $class . ' alt="doc' . $id . '">';
     }, $text);
-
-    \Drupal::logger('spip_to_drupal')->info('SPIP doc/img tags normalized to <img> placeholders (len: @len).', ['@len' => strlen($text)]);
 
     return $text;
   }
@@ -230,6 +264,90 @@ class SpipDocToEmbed extends ProcessPluginBase {
       }
     }
     return '';
+  }
+
+  protected function ensureFileForUrl(string $url, string $scheme, string $subdir, bool $reuse_existing): ?\Drupal\file\FileInterface {
+    try {
+      $file_repository = \Drupal::service('file.repository');
+      $file_system = \Drupal::service('file_system');
+      $directory = $scheme . ($subdir !== '' ? $subdir . '/' : '');
+      $file_system->prepareDirectory($directory, \Drupal\Core\File\FileSystemInterface::CREATE_DIRECTORY | \Drupal\Core\File\FileSystemInterface::MODIFY_PERMISSIONS);
+
+      $path = parse_url($url, PHP_URL_PATH) ?: '';
+      $basename = basename($path) ?: ('doc_' . substr(sha1($url), 0, 12));
+      $basename = preg_replace('/[^A-Za-z0-9._-]+/', '_', $basename);
+      $destination_uri = $directory . $basename;
+
+      if ($reuse_existing) {
+        $existing = $file_repository->loadByUri($destination_uri);
+        if ($existing) { return $existing; }
+        try {
+          $fids = \Drupal::entityQuery('file')
+            ->condition('filename', $basename)
+            ->range(0, 1)
+            ->accessCheck(FALSE)
+            ->execute();
+          if (!empty($fids)) {
+            $fid = reset($fids);
+            $file = \Drupal::entityTypeManager()->getStorage('file')->load($fid);
+            if ($file) { return $file; }
+          }
+        } catch (\Throwable $e) {}
+      }
+
+      $client = \Drupal::httpClient();
+      $response = $client->get($url, [
+        'timeout' => 30,
+        'headers' => [
+          'User-Agent' => 'Drupal SPIP Migration/1.0',
+          'Accept' => '*/*',
+        ],
+        'verify' => FALSE,
+      ]);
+      $data = $response->getBody()->getContents();
+      if ($data === '' || $data === FALSE) { return NULL; }
+      $file = $file_repository->writeData($data, $destination_uri, \Drupal\Core\File\FileSystemInterface::EXISTS_RENAME);
+      if ($file) {
+        $file->setPermanent();
+        $file->save();
+      }
+      return $file ?: NULL;
+    } catch (\Throwable $e) {
+      \Drupal::logger('spip_to_drupal')->warning('DocToEmbed: file download failed @url: @msg', ['@url' => $url, '@msg' => $e->getMessage()]);
+      return NULL;
+    }
+  }
+
+  protected function ensureMediaForFile(int $fid, string $bundle, string $file_field): ?\Drupal\media\MediaInterface {
+    try {
+      $query = \Drupal::entityQuery('media')
+        ->condition('bundle', $bundle)
+        ->condition($file_field . '.target_id', $fid)
+        ->range(0, 1)
+        ->accessCheck(FALSE);
+      $mids = $query->execute();
+      if (!empty($mids)) {
+        $mid = reset($mids);
+        $media = \Drupal::entityTypeManager()->getStorage('media')->load($mid);
+        if ($media) { return $media; }
+      }
+
+      $file = \Drupal::entityTypeManager()->getStorage('file')->load($fid);
+      if (!$file) { return NULL; }
+      $values = [
+        'bundle' => $bundle,
+        'name' => $file->getFilename(),
+        'status' => 1,
+      ];
+      /** @var \Drupal\media\MediaInterface $media */
+      $media = \Drupal::entityTypeManager()->getStorage('media')->create($values);
+      $media->set($file_field, [ 'target_id' => $fid ]);
+      $media->save();
+      return $media;
+    } catch (\Throwable $e) {
+      \Drupal::logger('spip_to_drupal')->warning('DocToEmbed: media ensure failed for fid @fid: @msg', ['@fid' => $fid, '@msg' => $e->getMessage()]);
+      return NULL;
+    }
   }
 }
 

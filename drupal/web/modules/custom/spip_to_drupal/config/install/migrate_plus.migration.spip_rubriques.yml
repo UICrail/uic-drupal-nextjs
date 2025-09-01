@@ -47,7 +47,7 @@ process:
     - plugin: spip_html_media_embed
       base_url: 'https://uic.org/'
       destination_scheme: 'public://'
-      destination_subdir: 'spip/images'
+      destination_subdir: 'activity/images'
       reuse_existing: true
       use_media: true
   field_header/format:
