@@ -45,7 +45,7 @@ export default async function FrontPage({
     await Promise.all([
       getNodeByPathQuery(path, locale),
       getArticleTeasers({ limit: 3, locale, sticky: true }),
-      getLatestActivitiesItems({ first: 3, locale }),
+      getLatestActivitiesItems({ first: 20, locale }),
     ]);
 
   // Extract the frontpage node from the query result
