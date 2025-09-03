@@ -35,9 +35,9 @@ process:
       documents_index_url: 'https://uic.org/com/?page=documents_exportxml'
       documents_index_urls:
         - 'https://uic.org/com/?page=documents_exportxml'
-        - 'https://uic.org/?page=documents_exportxml'
+        # - 'https://uic.org/?page=documents_exportxml'
       destination_scheme: 'public://'
-      destination_subdir: 'spip/documents'
+      destination_subdir: 'com/documents'
       reuse_existing: true
       image_media_bundle: 'image'
       image_media_field: 'field_media_image'
@@ -156,8 +156,8 @@ process:
       documents_index_url: 'https://uic.org/com/?page=documents_exportxml'
       documents_index_urls:
         - 'https://uic.org/com/?page=documents_exportxml'
-        - 'https://uic.org/?page=documents_exportxml'
-      id_prefixes: 'comdoc,doc'
+        # - 'https://uic.org/?page=documents_exportxml'
+      id_prefixes: 'comdoc'
       documents_id_param: 'id_document'
       destination_scheme: 'public://'
       destination_subdir: 'spip/documents'
@@ -174,8 +174,8 @@ process:
       documents_index_url: 'https://uic.org/com/?page=documents_exportxml'
       documents_index_urls:
         - 'https://uic.org/com/?page=documents_exportxml'
-        - 'https://uic.org/?page=documents_exportxml'
-      id_prefixes: 'comdoc,doc'
+        # - 'https://uic.org/?page=documents_exportxml'
+      id_prefixes: 'comdoc'
       documents_id_param: 'id_document'
       destination_scheme: 'public://'
       destination_subdir: 'spip/documents'

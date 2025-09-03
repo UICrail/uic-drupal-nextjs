@@ -5,11 +5,11 @@
 	[(#SET{par_page,[(#ENV{par_page}|intval|?{[(#ENV{par_page}|intval)],10})]})]
 	[(#SET{debut,[(#GET{num_page}|moins{1}|mult{#GET{par_page}})]})]
   
-    <BOUCLE_rublogo(RUBRIQUES){id_rubrique=145}>
-        [(#SET{logourl,[(#LOGO_RUBRIQUE|extraire_attribut{src})]})]
-    </BOUCLE_rublogo>
-      <BOUCLE_rub(RUBRIQUES){id_secteur IN 145, 13, 157, 30, 42, 26, 48, 22, 8, 5 } {#GET{debut},#GET{par_page}} {par id_rubrique}>
 
+      <BOUCLE_rub(RUBRIQUES){id_secteur IN 145, 13, 157, 30, 42, 26, 48, 22, 8, 5 } {#GET{debut},#GET{par_page}} {par id_rubrique}>
+        <BOUCLE_rublogo(RUBRIQUES){id_rubrique}>
+            [(#SET{logourl,[(#LOGO_RUBRIQUE|extraire_attribut{src})]})]
+        </BOUCLE_rublogo>
         <rubrique xml:id="#ID_RUBRIQUE">
 		            <id>rub#ID_RUBRIQUE</id>
             <parentid>rub#ID_PARENT</parentid>

@@ -1,10 +1,10 @@
-id: spip_rubriques
-label: '[SPIP] Rubriques Import - Auto-Pagination'
+id: spip_project_pages
+label: '[SPIP] Project Pages Import - Auto-Pagination'
 migration_group: spip_import
 source:
   plugin: spip_xml_file
-  url: 'https://uic.org/?page=rubriques_export'
-  item_selector: '//*[local-name()="rubrique"]'
+  url: 'https://uic.org/?page=project_page_export'
+  item_selector: '//rubrique'
   # Enable auto-pagination; no hard cap (fetch until no more items)
   auto_paginate: true
 
@@ -12,49 +12,17 @@ process:
   # Node type
   type:
     plugin: default_value
-    default_value: activity_page
-
+    default_value: article
+  
   # Language
   langcode:
     plugin: default_value
     default_value: en
-
+  
   # Title (required field)
   title: titre
-
-  # SPIP ID (unique identifier)
-  field_spip_id: id
-
-  # Subtitle field
-  field_subtitle: soustitre
-
-  # Header/Description field (SPIP 'desc')
-  field_header/value:
-    - plugin: spip_raccourcis_to_html
-      source: desc
-      base_url: 'https://uic.org/'
-    - plugin: spip_auto_link
-      base_url: 'https://uic.org/'
-    - plugin: spip_doc_to_embed
-      base_url: 'https://uic.org/'
-      doc_path_pattern: 'IMG'
-      documents_index_url: 'https://uic.org/?page=documents_exportxml'
-      documents_index_urls:
-        - 'https://uic.org/?page=documents_exportxml'
-        # - 'https://uic.org/com/?page=documents_exportxml'
-      documents_id_param: 'id_document'
-    - plugin: spip_html_transform
-    - plugin: spip_html_media_embed
-      base_url: 'https://uic.org/'
-      destination_scheme: 'public://'
-      destination_subdir: 'activity/images'
-      reuse_existing: true
-      use_media: true
-  field_header/format:
-    plugin: default_value
-    default_value: full_html
-
-  # Body field with format (SPIP 'texte')
+  
+  # Body field with format
   body/value:
     - plugin: spip_raccourcis_to_html
       source: texte
@@ -67,7 +35,13 @@ process:
       documents_index_url: 'https://uic.org/?page=documents_exportxml'
       documents_index_urls:
         - 'https://uic.org/?page=documents_exportxml'
-        # - 'https://uic.org/com/?page=documents_exportxml'
+      destination_scheme: 'public://'
+      destination_subdir: 'spip/documents'
+      reuse_existing: true
+      image_media_bundle: 'image'
+      image_media_field: 'field_media_image'
+      document_media_bundle: 'document'
+      document_media_field: 'field_media_document'
       documents_id_param: 'id_document'
     - plugin: spip_html_transform
     - plugin: spip_html_media_embed
@@ -82,7 +56,68 @@ process:
   body/format:
     plugin: default_value
     default_value: full_html
+    
+  # SPIP URL field
+  field_spip_url: formerurl
+  
+  # Subtitle field
+  field_subtitle: soustitre
 
+  # Header field (chapo)
+  field_header/value:
+    - plugin: spip_raccourcis_to_html
+      source: chapo
+      base_url: 'https://uic.org/'
+    - plugin: spip_auto_link
+      base_url: 'https://uic.org/'
+    - plugin: spip_doc_to_embed
+      base_url: 'https://uic.org/'
+      doc_path_pattern: 'IMG'
+      documents_index_url: 'https://uic.org/?page=documents_exportxml'
+      documents_index_urls:
+        - 'https://uic.org/?page=documents_exportxml'
+        - 'https://uic.org/?page=documents_exportxml'
+      destination_scheme: 'public://'
+      destination_subdir: 'spip/documents'
+      reuse_existing: true
+      image_media_bundle: 'image'
+      image_media_field: 'field_media_image'
+      document_media_bundle: 'document'
+      document_media_field: 'field_media_document'
+      documents_id_param: 'id_document'
+    - plugin: spip_html_transform
+    - plugin: spip_html_media_embed
+      base_url: 'https://uic.org/'
+      reuse_existing: true
+      use_media: true
+  field_header/format:
+    plugin: default_value
+    default_value: full_html
+
+  # Footer field (ps)
+  field_footer/value:
+    - plugin: spip_raccourcis_to_html
+      source: ps
+      base_url: 'https://uic.org/'
+    - plugin: spip_auto_link
+      base_url: 'https://uic.org/'
+    - plugin: spip_doc_to_embed
+      base_url: 'https://uic.org/'
+      doc_path_pattern: 'IMG'
+      documents_index_url: 'https://uic.org/?page=documents_exportxml'
+      documents_id_param: 'id_document'
+    - plugin: spip_html_transform
+    - plugin: spip_html_media_embed
+      base_url: 'https://uic.org/'
+      reuse_existing: true
+      use_media: true
+  field_footer/format:
+    plugin: default_value
+    default_value: full_html
+  
+  # SPIP ID (unique identifier)
+  field_spip_id: id
+    
   # Image principale depuis logourl -> Media entity dans field_featured_image
   field_featured_image:
     - plugin: skip_on_empty
@@ -100,21 +135,19 @@ process:
   # Tags - split by semicolon and create/reference taxonomy terms
   field_tags:
     - plugin: skip_on_empty
-      source: group1
+      source: tags1
       method: process
     - plugin: explode
       delimiter: ';'
     - plugin: callback
       callable: trim
-    - plugin: skip_on_empty
-      method: process
     - plugin: entity_generate
       entity_type: taxonomy_term
       bundle: tags
       value_key: name
       bundle_key: vid
 
-  # Gallery images -> Media references (multi-value) from <images>
+  # Gallery documents -> Media references (multi-value)
   field_gallery:
     - plugin: spip_portfolio_to_media
       source: images
@@ -122,7 +155,7 @@ process:
       documents_index_url: 'https://uic.org/?page=documents_exportxml'
       documents_index_urls:
         - 'https://uic.org/?page=documents_exportxml'
-        # - 'https://uic.org/com/?page=documents_exportxml'
+        - 'https://uic.org/?page=documents_exportxml'
       id_prefixes: 'doc'
       documents_id_param: 'id_document'
       destination_scheme: 'public://'
@@ -132,7 +165,7 @@ process:
       reuse_existing: true
       allowed_extensions: ['jpg','jpeg','png','gif','webp']
 
-  # Attachments from <portfolio> -> Media Document references
+  # Attachments from portfolio -> Media Document references
   field_attachments:
     - plugin: spip_portfolio_to_media
       source: portfolio
@@ -140,7 +173,6 @@ process:
       documents_index_url: 'https://uic.org/?page=documents_exportxml'
       documents_index_urls:
         - 'https://uic.org/?page=documents_exportxml'
-        # - 'https://uic.org/com/?page=documents_exportxml'
       id_prefixes: 'doc'
       documents_id_param: 'id_document'
       destination_scheme: 'public://'
@@ -152,10 +184,9 @@ process:
 
 destination:
   plugin: 'entity:node'
-  default_bundle: activity_page
+  default_bundle: article
 
 migration_dependencies:
   required: []
   optional: []
-
 
