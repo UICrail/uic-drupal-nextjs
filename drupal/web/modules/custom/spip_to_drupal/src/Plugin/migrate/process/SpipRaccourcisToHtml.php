@@ -39,15 +39,21 @@ class SpipRaccourcisToHtml extends ProcessPluginBase {
     // Normalize line endings.
     $text = str_replace(["\r\n", "\r"], "\n", $text);
 
-    // Convert SPIP link syntax: [text->url]
-    $text = preg_replace_callback('/\[(.*?)\-\>([^\]]+)\]/u', function ($m) use ($base_url) {
-      $label = trim($m[1]);
+    // Convert SPIP link syntax: [text->url] allowing spaces around the arrow.
+    $text = preg_replace_callback('/\[(.*?)\s*\-\>\s*([^\]]+)\]/u', function ($m) use ($base_url) {
+      $label_raw = trim($m[1]);
       $url = trim($m[2]);
       // Prepend base_url for relative URLs only (not http(s), mailto, tel, or root-relative)
       if ($base_url !== '' && !preg_match('#^(?:https?://|mailto:|tel:|/)#i', $url)) {
         $url = rtrim($base_url, '/') . '/' . ltrim($url, '/');
       }
-      $label = htmlspecialchars($label, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+      // Preserve SPIP media shortcuts inside link labels so later plugins can handle them.
+      if (preg_match('/<(?:doc|img|emb)\s*\d+(?:\|[^>]*)?>/i', $label_raw)) {
+        $label = $label_raw;
+      }
+      else {
+        $label = htmlspecialchars($label_raw, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+      }
       $url_attr = htmlspecialchars($url, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
       return '<a href="' . $url_attr . '">' . $label . '</a>';
     }, $text);

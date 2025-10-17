@@ -12,10 +12,10 @@ type ArticlesListingPageParams = {
   params: {
     locale: string;
   };
-  searchParams?: {
+  searchParams?: Promise<{
     query?: string;
     page?: string;
-  };
+  }>;
 };
 
 export async function generateMetadata({
@@ -51,7 +51,8 @@ export default async function AllArticlesPage({
   setRequestLocale(locale);
 
   // Get the query and current page from the search params
-  const currentPage = Number(searchParams?.page) || 1;
+  const resolvedSearchParams = await searchParams;
+  const currentPage = Number(resolvedSearchParams?.page) || 1;
 
   // This has to match one of the allowed values in the article listing view
   // in Drupal.

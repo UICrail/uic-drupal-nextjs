@@ -78,10 +78,18 @@ class SpipDocToEmbed extends ProcessPluginBase {
     $document_media_bundle = (string) ($config['document_media_bundle'] ?? 'document');
     $document_media_field = (string) ($config['document_media_field'] ?? 'field_media_document');
 
-    // Replace <doc123|center> and <img123|left> with <drupal-media> embeds.
-    $text = preg_replace_callback('/<(doc|img)(\d+)(?:\|(left|center|right))?>/i', function ($m) use ($base_url, $doc_path_pattern, $documents_index_urls, $documents_id_param, $image_extensions, $destination_scheme, $destination_subdir, $reuse_existing, $image_media_bundle, $image_media_field, $document_media_bundle, $document_media_field, $row) {
+    // Replace <doc123|...> and <img123|...> with <drupal-media> embeds.
+    // Accept any additional SPIP params after the first pipe and extract alignment
+    // (left|center|right) if present, e.g. <img123|center|200x150|nolink>.
+    $text = preg_replace_callback('/<(doc|img)\s*(\d+)(?:\|([^>]*))?>/i', function ($m) use ($base_url, $doc_path_pattern, $documents_index_urls, $documents_id_param, $image_extensions, $destination_scheme, $destination_subdir, $reuse_existing, $image_media_bundle, $image_media_field, $document_media_bundle, $document_media_field, $row) {
       $id = $m[2];
-      $align = isset($m[3]) ? strtolower($m[3]) : '';
+      $raw_params = isset($m[3]) ? trim($m[3]) : '';
+      $align = '';
+      if ($raw_params !== '') {
+        if (preg_match('/\b(left|center|right)\b/i', $raw_params, $am)) {
+          $align = strtolower($am[1]);
+        }
+      }
 
       // Resolve URL via cached map, per-id API lookup, or fallback heuristic.
       $url = '';

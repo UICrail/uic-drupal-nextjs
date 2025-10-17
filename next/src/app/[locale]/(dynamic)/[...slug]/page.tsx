@@ -15,34 +15,33 @@ import {
 } from "@/lib/graphql/utils";
 
 type NodePageParams = {
-  params: { slug: string[]; locale: string };
+  params: Promise<{ slug: string[]; locale: string }>;
 };
 
 // The metadata for the page is generated here.
 export async function generateMetadata({
-  params: { locale, slug },
+  params,
 }: NodePageParams): Promise<Metadata> {
+  const { locale, slug } = await params;
   const path = "/" + slug.join("/");
   const metadata = await getNodeMetadata(path, locale);
   return metadata;
 }
 
 // Generates static paths for all node types.
-export async function generateStaticParams({
-  params: { locale },
-}: NodePageParams) {
+export async function generateStaticParams({ params }: NodePageParams) {
+  const { locale } = await params;
   // TODO: Add the node types you want to generate static paths in the array below.
   const nodeTypes = ["nodePages", "nodeActivityPages", "nodeArticles"];
-  const params = await getNodeStaticParams(nodeTypes, locale, 10);
-  return params;
+  const staticParams = await getNodeStaticParams(nodeTypes, locale, 10);
+  return staticParams;
 }
 
 // We set the revalidate time to a long period because the content is not expected to change frequently.
 export const revalidate = REVALIDATE_LONG;
 
-export default async function NodePage({
-  params: { locale, slug },
-}: NodePageParams) {
+export default async function NodePage({ params }: NodePageParams) {
+  const { locale, slug } = await params;
   setRequestLocale(locale);
 
   // Construct the path from the slug array.

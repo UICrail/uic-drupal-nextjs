@@ -17,12 +17,13 @@ import { getNodeMetadata } from "@/lib/drupal/get-node-metadata";
 import { extractEntityFromRouteQueryResult } from "@/lib/graphql/utils";
 
 type FrontpageParams = {
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 };
 
 export async function generateMetadata({
-  params: { locale },
+  params,
 }: FrontpageParams): Promise<Metadata> {
+  const { locale } = await params;
   const path = `/frontpage-${locale}`;
   const metadata = await getNodeMetadata(path, locale);
   return metadata;
@@ -30,9 +31,8 @@ export async function generateMetadata({
 
 export const revalidate = REVALIDATE_LONG;
 
-export default async function FrontPage({
-  params: { locale },
-}: FrontpageParams) {
+export default async function FrontPage({ params }: FrontpageParams) {
+  const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations();
 

@@ -1,5 +1,4 @@
-import { cache } from "react";
-import { neshCache } from "@neshca/cache-handler/functions";
+import { unstable_cache } from "next/cache";
 import { AbortError } from "p-retry";
 
 import { REVALIDATE_LONG } from "@/lib/constants";
@@ -34,9 +33,6 @@ export async function fetchNodeByPathQuery(
   });
 }
 
-// Here we wrap the function in react cache and nesh cache  avoiding unnecessary requests.
-const cachedFetchNodeByPathQuery = neshCache(cache(fetchNodeByPathQuery));
-
 /**
  * Function to retrieve a node by its Drupal path.
  *
@@ -62,13 +58,29 @@ export async function getNodeByPathQuery(
   revision: string = null,
 ) {
   try {
-    return await cachedFetchNodeByPathQuery(
-      { tags: [`/${locale}${path}`], revalidate: REVALIDATE_LONG },
-      path,
-      locale,
-      isDraftMode,
-      revision,
+    // Use Next.js 15 native unstable_cache with tags and revalidation
+    // Don't cache in draft mode to always get fresh data
+    if (isDraftMode) {
+      return await fetchNodeByPathQuery(path, locale, isDraftMode, revision);
+    }
+
+    const cachedFetchNode = unstable_cache(
+      async (
+        nodePath: string,
+        nodeLocale: string,
+        draft: boolean,
+        rev: string | null,
+      ) => {
+        return await fetchNodeByPathQuery(nodePath, nodeLocale, draft, rev);
+      },
+      [`node-${locale}-${path}-${revision || "latest"}`],
+      {
+        tags: [`/${locale}${path}`],
+        revalidate: REVALIDATE_LONG,
+      },
     );
+
+    return await cachedFetchNode(path, locale, isDraftMode, revision);
   } catch (error) {
     const type =
       error instanceof AbortError

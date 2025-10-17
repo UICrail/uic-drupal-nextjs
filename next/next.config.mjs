@@ -11,33 +11,37 @@ const nextConfig = {
   poweredByHeader: false,
   output: process.env.CIRCLECI ? "standalone" : undefined,
 
+  // Custom cache handler with Redis support (Next.js 15 native API)
   cacheHandler:
-    // Only use the cache handler in production
     process.env.NODE_ENV === "production"
       ? new URL("./cache-handler.mjs", import.meta.url).pathname
       : undefined,
-  cacheMaxMemorySize: 0, // Disable in-memory cache
+  cacheMaxMemorySize: 0, // Disable default in-memory cache
 
   images: {
-    remotePatterns: [
-      process.env.DRUPAL_BASE_URL_INTERNAL_IMAGES,
-      process.env.NEXT_PUBLIC_DRUPAL_BASE_URL,
-    ].map((url = "") => {
-      const [protocol, hostname] = url.split("://");
-      if (!hostname || (protocol !== "https" && protocol !== "http")) {
-        throw new Error(`Invalid images URL "${url}" in next.config.ts`);
-      }
-      return {
-        protocol,
-        hostname,
-        pathname: "**",
-      };
-    }),
+    remotePatterns: /** @type {string[]} */ (
+      [
+        process.env.DRUPAL_BASE_URL_INTERNAL_IMAGES,
+        process.env.NEXT_PUBLIC_DRUPAL_BASE_URL,
+      ].filter((url) => Boolean(url))
+    ) // Filter out undefined/empty values
+      .map((url) => {
+        const [protocol, hostname] = url.split("://");
+        if (!hostname || (protocol !== "https" && protocol !== "http")) {
+          throw new Error(`Invalid images URL "${url}" in next.config.ts`);
+        }
+        return {
+          protocol,
+          hostname,
+          pathname: "**",
+        };
+      }),
   },
 
+  expireTime: 31536000, // 1 year (moved from experimental.swrDelta in Next.js 15)
+
   experimental: {
-    instrumentationHook: true,
-    swrDelta: 31536000, // 1 year
+    // instrumentationHook is now enabled by default in Next.js 15
   },
 
   async generateBuildId() {
@@ -84,6 +88,12 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: Boolean(process.env.NEXT_BUILD_SKIP_CHECKS),
   },
+
+  // For development with ddev
+  allowedDevOrigins:
+    process.env.NODE_ENV === "development"
+      ? ["next-drupal-starterkit.ddev.site"]
+      : undefined,
 };
 
 export default withNextIntl(nextConfig);

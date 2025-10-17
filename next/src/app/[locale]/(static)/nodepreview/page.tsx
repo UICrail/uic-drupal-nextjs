@@ -5,9 +5,16 @@ import NotFoundPage from "@/components/not-found-page";
 import { fetchNodeByPathQuery } from "@/lib/drupal/get-node";
 import { extractEntityFromRouteQueryResult } from "@/lib/graphql/utils";
 
-async function DrupalPreviewPage({ searchParams, params: { locale } }) {
+async function DrupalPreviewPage({
+  searchParams,
+  params: { locale },
+}: {
+  searchParams: Promise<{ path?: string }>;
+  params: { locale: string };
+}) {
   setRequestLocale(locale);
-  const previewPath = searchParams.path;
+  const resolvedSearchParams = await searchParams;
+  const previewPath = resolvedSearchParams.path;
   const nodeByPathResult = await fetchNodeByPathQuery(
     previewPath,
     locale,

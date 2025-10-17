@@ -1,5 +1,4 @@
-import { cache } from "react";
-import { neshCache } from "@neshca/cache-handler/functions";
+import { unstable_cache } from "next/cache";
 import { AbortError } from "p-retry";
 
 import { REVALIDATE_LONG } from "@/lib/constants";
@@ -23,9 +22,6 @@ export async function fetchMenu(name: MenuAvailable, locale: string) {
   });
 }
 
-// Here we wrap the function in react cache and nesh cache  avoiding unnecessary requests.
-const cachedFetchMenu = neshCache(cache(fetchMenu));
-
 /**
  * Gets the menu data for a given menu name and locale.
  * If an error occurs during fetching, logs the error and returns null.
@@ -36,11 +32,19 @@ const cachedFetchMenu = neshCache(cache(fetchMenu));
  */
 export async function getMenu(name: MenuAvailable, locale: string) {
   try {
-    const menus = await cachedFetchMenu(
-      { tags: [name], revalidate: REVALIDATE_LONG },
-      name,
-      locale,
+    // Use Next.js 15 native unstable_cache with tags and revalidation
+    const cachedFetchMenu = unstable_cache(
+      async (menuName: MenuAvailable, menuLocale: string) => {
+        return await fetchMenu(menuName, menuLocale);
+      },
+      [`menu-${name}-${locale}`],
+      {
+        tags: [name],
+        revalidate: REVALIDATE_LONG,
+      },
     );
+
+    const menus = await cachedFetchMenu(name, locale);
     return menus.menu;
   } catch (error) {
     const type =

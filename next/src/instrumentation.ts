@@ -1,22 +1,15 @@
 /* eslint-disable n/no-process-env */
 
+/**
+ * Next.js Instrumentation
+ * This file is used to initialize services when the Next.js server starts
+ * Documentation: https://nextjs.org/docs/app/api-reference/file-conventions/instrumentation
+ */
+
 export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs") {
-    const { registerInitialCache } = await import(
-      "@neshca/cache-handler/instrumentation"
-    );
-
-    // Assuming that your CacheHandler configuration is in the root of the project and the instrumentation is in the src directory.
-    // Please adjust the path accordingly.
-    // CommonJS CacheHandler configuration is also supported.
-    const CacheHandler = (await import("../cache-handler.mjs")).default;
-
-    await registerInitialCache(CacheHandler, {
-      // By default, it populates the cache with pre-rendered pages, routes, and fetch calls.
-      // You can disable these features by setting the options to false.
-      // For example, if you want to populate the cache with only pre-rendered pages, you can set the options as follows:
-      // fetch: false,
-      // routes: false,
-    });
+    // Custom cache handler is configured in next.config.mjs
+    // No additional initialization needed for Next.js 15 native cache handler
+    console.info("[Instrumentation] Next.js cache handler initialized");
   }
 }

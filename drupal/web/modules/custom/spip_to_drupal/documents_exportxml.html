@@ -2,19 +2,59 @@
 <?xml version="1.0"[ encoding="(#CHARSET)"]?>
 <!DOCTYPE docs>
 <docs xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink">
-    [(#SET{id_doc, #ENV{id_document}|intval})]
-    [(#SET{id_art, #ENV{id_article}|intval})]
+[(#SET{id_doc, #ENV{id_document}|intval})]
+[(#SET{id_art, #ENV{id_article}|intval})]
 
-    <BOUCLE_one(DOCUMENTS){id_document?}{id_document=#GET{id_doc}}{0,1}>
+<BOUCLE_one(DOCUMENTS){id_document?}{id_document=#GET{id_doc}}{0,1}>
+    <doc xml:id="doc#ID_DOCUMENT">
+        <doc_url>[(#URL_DOCUMENT|url_absolue)]</doc_url>
+    </doc>
+    </BOUCLE_one>
+
+    <BOUCLE_by_article(DOCUMENTS){id_article?}{id_article=#GET{id_art}}{par id_document}>
         <doc xml:id="doc#ID_DOCUMENT">
             <doc_url>[(#URL_DOCUMENT|url_absolue)]</doc_url>
         </doc>
-        </BOUCLE_one>
-
-        <BOUCLE_by_article(DOCUMENTS){id_article?}{id_article=#GET{id_art}}{par id_document}>
-            <doc xml:id="doc#ID_DOCUMENT">
-                <doc_url>[(#URL_DOCUMENT|url_absolue)]</doc_url>
-            </doc>
-            </BOUCLE_by_article>
+        </BOUCLE_by_article>
 
 </docs>
+
+<!-- #CACHE{0}[(#HTTP_HEADER{Content-type: text/xml[; charset=(#CHARSET)]})]<?xml version="1.0"[ encoding="(#CHARSET)"]?>
+<!DOCTYPE docs>
+<docs xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink">
+  [(#SET{id_doc, #ENV{id_document}|intval})]
+  [(#SET{id_art, #ENV{id_article}|intval})]
+
+  <BOUCLE_one(DOCUMENTS){id_document?}{id_document=#GET{id_doc}}{0,1}>
+    <doc xml:id="doc#ID_DOCUMENT">
+      <doc_url>[(#URL_DOCUMENT|url_absolue)]</doc_url>
+      		      <doc_title>[(#TITRE|?{#TITRE, [(#URL_DOCUMENT|explode{/}|array_pop)]})]</doc_title>
+		      <doc_desc>#DESCRIPTIF</doc_desc>
+			  <id>doc#ID_DOCUMENT</id>
+		      <doc_date>#DATE</doc_date>
+		      <doc_credit>#CREDITS</doc_credit>
+		      <doc_type>#MIME_TYPE</doc_type>
+		      <doc_thumb>[(#LOGO_DOCUMENT|extraire_attribut{src}|url_absolue)]</doc_thumb>
+		      <doc_taille>#TAILLE</doc_taille>
+		      <doc_alt>#ALT</doc_alt>
+		      <doc_url2>[(#URL_DOCUMENT|abs_url)]</doc_url2>
+    </doc>
+  </BOUCLE_one>
+
+  <BOUCLE_by_article(DOCUMENTS){id_article?}{id_article=#GET{id_art}}{par id_document}>
+    <doc xml:id="doc#ID_DOCUMENT">
+      <doc_url>[(#URL_DOCUMENT|url_absolue)]</doc_url>
+      		      <doc_title>[(#TITRE|?{#TITRE, [(#URL_DOCUMENT|explode{/}|array_pop)]})]</doc_title>
+		      <doc_desc>#DESCRIPTIF</doc_desc>
+			  <id>doc#ID_DOCUMENT</id>
+		      <doc_date>#DATE</doc_date>
+		      <doc_credit>#CREDITS</doc_credit>
+		      <doc_type>#MIME_TYPE</doc_type>
+		      <doc_thumb>[(#LOGO_DOCUMENT|extraire_attribut{src}|url_absolue)]</doc_thumb>
+		      <doc_taille>#TAILLE</doc_taille>
+		      <doc_alt>#ALT</doc_alt>
+		      <doc_url2>[(#URL_DOCUMENT|abs_url)]</doc_url2>
+    </doc>
+  </BOUCLE_by_article>
+
+</docs> -->
