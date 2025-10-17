@@ -1,9 +1,6 @@
-// If you want to use other PostCSS plugins, see the following:
-// https://tailwindcss.com/docs/using-with-preprocessors
+// Tailwind CSS v4 PostCSS plugin
 module.exports = {
   plugins: {
-    "tailwindcss/nesting": {},
-    tailwindcss: {},
-    autoprefixer: {},
+    "@tailwindcss/postcss": {},
   },
 };

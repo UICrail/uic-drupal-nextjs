@@ -3,11 +3,11 @@
 @theme {
   /* Font families */
   --font-family-inter:
-    var(--font-inter), ui-sans-serif, system-ui, sans-serif,
-    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    var(--font-inter), ui-sans-sersystem-ui, sans-serif,
+    "Apple Color Emoji", "Segoe UIoi", "Segoe UI Symbol", "Noto Color Emoji";
   --font-family-overpass:
-    var(--font-overpass), ui-sans-serif, system-ui, sans-serif,
-    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    var(--font-overpass), ui-sans-r, system-ui, sans-serif,
+    "Apple Color Emoji", "Segoe UIEi", "Segoe UI Symbol", "Noto Color Emoji";
 
   /* Border radius */
   --radius-lg: var(--radius);
@@ -130,44 +130,29 @@
     --warning: 40 100% 50%;
     --error: 0 62.8% 30.6%;
   }
-  /* border-color: hsl(var(--border)); */
+}
 
-  /* @layer base {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
+@layer base {
+  * {
     @apply border-border;
   }
   body {
     @apply bg-background text-foreground;
   }
-    display: flex;
-    align-items: center;
-    color: hsl(var(--primary));
-    text-decoration: none;
+}
 
-    &:visited {
-      color: hsl(var(--primary));
-    }
-
-    &:hover {
-      text-decoration: underline;
-    }
-
-    &[f^="https://"]::after {
-      margin-left: 0.25rem;
-      display: inline-block;
-      height: 1em;
-      width: 1em; items-center hover:underline; flex items-centerps://"]::after
+@layer components {
+  .hyperlink {
+    @apply text-primary visited:text-primary  flex items-centerflex items-center hover:underline;ps://"]::after
     {
       @apply ml-1 inline-block h-[1em] w-[1em];
       content: url(./icons/external.svg);
     }
   }
-} */
+}
 
-  @layer utilities {
-    .circle-clip {
-      clip-path: circle();
-    }
+@layer utilities {
+  .circle-clip {
+    clip-path: circle();
   }
 }

@@ -21,7 +21,7 @@ export function ArticleListItem({ article }: ArticleListItemProps) {
     <Link
       href={article.path}
       className={cn(
-        "group relative flex h-full flex-col overflow-hidden rounded-lg border bg-white shadow-sm transition-all duration-300 hover:shadow-lg dark:bg-gray-900",
+        "group relative flex h-full flex-col overflow-hidden rounded-lg border bg-white shadow-xs transition-all duration-300 hover:shadow-md dark:bg-gray-900",
         "border-primary-200 bg-primary-50 dark:bg-primary-900/20",
       )}
     >
@@ -39,12 +39,12 @@ export function ArticleListItem({ article }: ArticleListItemProps) {
             }
           />
           {article.sticky && (
-            <div className="absolute right-2 top-2 h-2 w-2 rounded-full bg-cyan-500"></div>
+            <div className="absolute top-2 right-2 h-2 w-2 rounded-full bg-cyan-500"></div>
           )}
         </div>
       )}
       <div className="flex flex-1 flex-col p-4">
-        <h2 className="group-hover:text-primary-600 dark:group-hover:text-primary-400 mb-2 line-clamp-2 text-lg font-semibold leading-tight text-gray-900 transition-colors dark:text-white">
+        <h2 className="group-hover:text-primary-600 dark:group-hover:text-primary-400 mb-2 line-clamp-2 text-lg leading-tight font-semibold text-gray-900 transition-colors dark:text-white">
           {article.title}
         </h2>
         <div className="mb-3 text-sm text-gray-600 dark:text-gray-400">

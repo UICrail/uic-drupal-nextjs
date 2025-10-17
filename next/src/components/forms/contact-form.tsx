@@ -54,7 +54,7 @@ export function ContactForm() {
   }
 
   return (
-    <div className="mx-auto mb-4 flex max-w-xl flex-col gap-5 rounded border border-border p-4 shadow-md transition-all">
+    <div className="border-border mx-auto mb-4 flex max-w-xl flex-col gap-5 rounded border p-4 shadow-sm transition-all">
       <HeadingParagraph>{t("form-title")}</HeadingParagraph>
       <AuthGateClient text={t("login-to-fill-form")}>
         <p className="text-muted-foreground">{t("form-description")}</p>

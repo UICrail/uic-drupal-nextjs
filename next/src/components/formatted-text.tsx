@@ -99,22 +99,22 @@ const options: HTMLReactParserOptions = {
       }
 
       case "p": {
-        const hasDrupalMediaChild = (domNode.children || []).some(
-          (child) => isElement(child) && child.name === "drupal-media",
-        );
+        const hasDrupalMediaChild = (
+          (domNode.children as DOMNode[]) || []
+        ).some((child) => isElement(child) && child.name === "drupal-media");
 
         if (hasDrupalMediaChild) {
           return (
-            <div className="mb-2 text-muted-foreground">
+            <div className="text-muted-foreground mb-2">
               {domToReact(domNode.children as DOMNode[], options)}
             </div>
           );
         }
 
         return (
-          <p className="mb-2 text-muted-foreground">
+          <div className="text-muted-foreground mb-2">
             {domToReact(domNode.children as DOMNode[], options)}
-          </p>
+          </div>
         );
       }
 

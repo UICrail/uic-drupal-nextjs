@@ -49,7 +49,7 @@ export function ActivityTeaser({ activity }: ActivityTeaserProps) {
         </div>
       )}
       <div className="flex flex-1 flex-col p-4">
-        <h3 className="group-hover:text-primary-600 dark:group-hover:text-primary-400 mb-2 line-clamp-2 text-lg font-semibold leading-tight text-gray-900 transition-colors dark:text-white">
+        <h3 className="group-hover:text-primary-600 dark:group-hover:text-primary-400 mb-2 line-clamp-2 text-lg leading-tight font-semibold text-gray-900 transition-colors dark:text-white">
           {activity.title}
         </h3>
         {date && (
@@ -67,7 +67,7 @@ export function ActivityTeaser({ activity }: ActivityTeaserProps) {
   );
 
   const cardClass = cn(
-    "group relative flex h-full flex-col overflow-hidden rounded-lg border bg-white shadow-sm transition-all duration-300 hover:shadow-lg dark:bg-gray-900",
+    "group relative flex h-full flex-col overflow-hidden rounded-lg border bg-white shadow-xs transition-all duration-300 hover:shadow-md dark:bg-gray-900",
     "border-primary-200 bg-primary-50 dark:bg-primary-900/20",
   );
 

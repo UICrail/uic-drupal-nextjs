@@ -23,7 +23,7 @@ export function ArticleTeaser({ article }: ArticleTeaserProps) {
 
   return (
     <Link href={article.path}>
-      <Card className="flex h-full flex-col justify-between hover:shadow-md">
+      <Card className="flex h-full flex-col justify-between hover:shadow-sm">
         <CardHeader>
           <CardTitle>{article.title}</CardTitle>
           <CardDescription>

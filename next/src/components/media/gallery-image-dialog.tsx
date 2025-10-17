@@ -19,7 +19,7 @@ export function GalleryImageDialog({
       <DialogTrigger asChild>
         <button
           type="button"
-          className="group block w-full overflow-hidden rounded border border-border bg-background transition-all hover:scale-[1.01] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-ring"
+          className="group border-border bg-background focus:ring-ring block w-full overflow-hidden rounded border transition-all hover:scale-[1.01] hover:shadow-sm focus:ring-2 focus:outline-none"
         >
           <NextImage
             src={url}

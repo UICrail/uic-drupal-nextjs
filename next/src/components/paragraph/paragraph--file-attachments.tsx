@@ -12,7 +12,7 @@ export function ParagraphFileAttachments({
 }) {
   return (
     <section
-      className="relative h-full rounded border border-border bg-background p-4 transition-all hover:shadow-md"
+      className="border-border bg-background relative h-full rounded border p-4 transition-all hover:shadow-sm"
       data-paragraph={paragraph.__typename}
     >
       {paragraph.fileAttachmentsParagraphHeading && (

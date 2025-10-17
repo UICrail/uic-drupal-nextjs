@@ -4,5 +4,6 @@
 }
 
 .mainMenu :focus-visible {
-  @apply ring-inset ring-offset-0;
+  --tw-ring-inset: inset;
+  --tw-ring-offset-width: 0px;
 }
