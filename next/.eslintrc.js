@@ -28,8 +28,7 @@ module.exports = {
       files: ["**/*.{ts,tsx}"],
       parser: "@typescript-eslint/parser",
       parserOptions: {
-        project: "./tsconfig.json",
-        tsconfigRootDir: __dirname,
+        project: true,
       },
       env: {
         browser: true,

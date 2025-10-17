@@ -48,7 +48,7 @@ export default async function NodePage({ params }: NodePageParams) {
   const path = "/" + slug.join("/");
 
   // Are we in Next.js draft mode?
-  const isDraftMode = draftMode().isEnabled;
+  const isDraftMode = (await draftMode()).isEnabled;
 
   // Get the node entity from Drupal. We tell the function if we are in draft mode so it can use the correct client
   // in the getNodeByPathQuery function.

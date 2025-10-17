@@ -57,7 +57,7 @@ export default async function FrontPage({ params }: FrontpageParams) {
   }
 
   // Unless we are in draftMode, we throw an error if the node is set to unpublished:
-  if (!draftMode().isEnabled && frontpage.status !== true) {
+  if (!(await draftMode()).isEnabled && frontpage.status !== true) {
     throw new Error("Frontpage not published for locale " + locale);
   }
 
@@ -73,7 +73,7 @@ export default async function FrontPage({ params }: FrontpageParams) {
       />
       <Separator className="mx-auto my-9 max-w-4xl" />
       <ActivityTeasers
-        heading={t("activities")}
+        heading="activities"
         activities={activitiesResult.activities}
       />
       <ContactList />
