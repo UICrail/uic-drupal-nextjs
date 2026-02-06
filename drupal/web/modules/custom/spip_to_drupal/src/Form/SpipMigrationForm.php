@@ -142,6 +142,35 @@ class SpipMigrationForm extends FormBase {
       '#attributes' => ['id' => 'test-url-results'],
     ];
 
+    // File upload field for local XML import
+    $form['migration_config']['xml_file'] = [
+      '#type' => 'managed_file',
+      '#title' => $this->t('Upload XML File'),
+      '#description' => $this->t('Upload the SPIP XML export file (max 50 MB).'),
+      '#upload_location' => 'public://feeds/',
+      '#upload_validators' => [
+        'file_validate_extensions' => ['xml'],
+        'file_validate_size' => [50 * 1024 * 1024],
+      ],
+      '#states' => [
+        'visible' => [
+          ':input[name="source_type"]' => ['value' => 'file'],
+        ],
+      ],
+    ];
+
+    // Server-side file path (alternative to upload, more reliable)
+    $form['migration_config']['xml_file_path'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('OR Server File Path'),
+      '#description' => $this->t('Path to an XML file already on the server. Supports: absolute path (e.g. /home/www/.../project_pages.xml), stream wrapper (public://feeds/project_pages.xml), or filename in the module directory (e.g. project_pages.xml). <strong>This takes priority over file upload.</strong>'),
+      '#states' => [
+        'visible' => [
+          ':input[name="source_type"]' => ['value' => 'file'],
+        ],
+      ],
+    ];
+
     $form['migration_config']['limit'] = [
       '#type' => 'number',
       '#title' => $this->t('Number of Items'),
@@ -298,12 +327,31 @@ class SpipMigrationForm extends FormBase {
       $destination_bundle = $form_state->getValue('destination_bundle') ?: 'article';
       $migration_id = $this->determineMigrationId($form_state, $source_type, $destination_bundle);
 
+      // Handle file upload for local import
+      if ($source_type === 'file') {
+        $file_path = $this->handleFileUpload($form_state, $destination_bundle);
+        if (!$file_path) {
+          $this->messenger->addError($this->t('Please upload an XML file for local import.'));
+          return;
+        }
+        // Store file path globally so the source plugin can use it
+        $GLOBALS['spip_migration_file_path'] = $file_path;
+      }
+
       // Get the migration plugin
       $migration = $this->migrationPluginManager->createInstance($migration_id);
       
       if (!$migration) {
         $this->messenger->addError($this->t('Migration @id not found.', ['@id' => $migration_id]));
         return;
+      }
+
+      // Override file_path in source configuration if uploading
+      if ($source_type === 'file' && !empty($file_path)) {
+        $source = $migration->getSourceConfiguration();
+        $source['file_path'] = $file_path;
+        $source['url'] = NULL;
+        $migration->set('source', $source);
       }
 
       // Set the limit if specified by using a global variable
@@ -329,6 +377,9 @@ class SpipMigrationForm extends FormBase {
       if (isset($GLOBALS['spip_migration_custom_url'])) {
         unset($GLOBALS['spip_migration_custom_url']);
       }
+      if (isset($GLOBALS['spip_migration_file_path'])) {
+        unset($GLOBALS['spip_migration_file_path']);
+      }
 
       if ($result === MigrationInterface::RESULT_COMPLETED) {
         $this->messenger->addStatus($this->t('Migration @id completed successfully.', ['@id' => $migration_id]));
@@ -342,6 +393,157 @@ class SpipMigrationForm extends FormBase {
   }
 
   /**
+   * Handles file upload for local XML import.
+   *
+   * Saves the uploaded file to public://feeds/ with a predictable name
+   * based on the destination bundle, and returns the stream wrapper path.
+   *
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   * @param string $bundle
+   *   The destination bundle (article, activity_page, project_page).
+   *
+   * @return string|null
+   *   The file path (stream wrapper) or NULL if no file uploaded.
+   */
+  protected function handleFileUpload(FormStateInterface $form_state, string $bundle): ?string {
+    /** @var \Drupal\Core\File\FileSystemInterface $file_system */
+    $file_system = \Drupal::service('file_system');
+
+    // Map bundle to expected filename
+    $filename_map = [
+      'article' => 'enews_articles.xml',
+      'activity_page' => 'rubriques.xml',
+      'project_page' => 'project_pages.xml',
+    ];
+    $target_filename = $filename_map[$bundle] ?? 'spip_import.xml';
+    $target_path = 'public://feeds/' . $target_filename;
+
+    // ---- Option 1: Server-side file path (takes priority) ----
+    $server_path = trim($form_state->getValue('xml_file_path') ?? '');
+    if (!empty($server_path)) {
+      $resolved = $this->resolveFilePath($server_path);
+      if ($resolved) {
+        // Ensure feeds directory exists
+        $feeds_dir = 'public://feeds';
+        $file_system->prepareDirectory($feeds_dir, \Drupal\Core\File\FileSystemInterface::CREATE_DIRECTORY | \Drupal\Core\File\FileSystemInterface::MODIFY_PERMISSIONS);
+
+        // Copy to the expected path
+        try {
+          $file_system->copy($resolved, $target_path, \Drupal\Core\File\FileSystemInterface::EXISTS_REPLACE);
+          \Drupal::logger('spip_to_drupal')->info('XML file copied from server path @src to @dst', [
+            '@src' => $resolved,
+            '@dst' => $target_path,
+          ]);
+          return $target_path;
+        }
+        catch (\Exception $e) {
+          // If copy fails, try using the resolved path directly
+          \Drupal::logger('spip_to_drupal')->info('Copy failed, using server path directly: @path', ['@path' => $resolved]);
+          return $resolved;
+        }
+      }
+      else {
+        \Drupal::logger('spip_to_drupal')->error('Server file path not found: @path', ['@path' => $server_path]);
+        $this->messenger->addError($this->t('File not found at server path: @path', ['@path' => $server_path]));
+        return NULL;
+      }
+    }
+
+    // ---- Option 2: Managed file upload ----
+    $fids = $form_state->getValue('xml_file');
+    \Drupal::logger('spip_to_drupal')->info('File upload FIDs: @fids', ['@fids' => print_r($fids, TRUE)]);
+
+    if (empty($fids)) {
+      return NULL;
+    }
+
+    $fid = is_array($fids) ? reset($fids) : $fids;
+    if (empty($fid)) {
+      return NULL;
+    }
+
+    /** @var \Drupal\file\FileInterface $file */
+    $file = \Drupal\file\Entity\File::load($fid);
+    if (!$file) {
+      \Drupal::logger('spip_to_drupal')->error('Could not load file entity with FID @fid', ['@fid' => $fid]);
+      return NULL;
+    }
+
+    // Ensure the feeds directory exists
+    $feeds_dir = 'public://feeds';
+    $file_system->prepareDirectory($feeds_dir, \Drupal\Core\File\FileSystemInterface::CREATE_DIRECTORY | \Drupal\Core\File\FileSystemInterface::MODIFY_PERMISSIONS);
+
+    // Copy the uploaded file to the target path
+    $source_path = $file->getFileUri();
+    \Drupal::logger('spip_to_drupal')->info('Uploaded file source URI: @uri', ['@uri' => $source_path]);
+
+    try {
+      $file_system->copy($source_path, $target_path, \Drupal\Core\File\FileSystemInterface::EXISTS_REPLACE);
+      \Drupal::logger('spip_to_drupal')->info('XML file uploaded and saved to @path', ['@path' => $target_path]);
+    }
+    catch (\Exception $e) {
+      \Drupal::logger('spip_to_drupal')->error('Failed to save uploaded XML file: @error', ['@error' => $e->getMessage()]);
+      return NULL;
+    }
+
+    // Make the file permanent
+    $file->setPermanent();
+    $file->save();
+
+    return $target_path;
+  }
+
+  /**
+   * Resolves a file path to an actual existing file.
+   *
+   * Supports: stream wrappers (public://), absolute paths, Drupal root
+   * relative paths, and filenames in the spip_to_drupal module directory.
+   *
+   * @param string $path
+   *   The file path to resolve.
+   *
+   * @return string|null
+   *   The resolved absolute path, or NULL if not found.
+   */
+  protected function resolveFilePath(string $path): ?string {
+    // Stream wrapper (public://, private://, etc.)
+    if (strpos($path, '://') !== false) {
+      $resolved = \Drupal::service('file_system')->realpath($path);
+      if ($resolved && file_exists($resolved)) {
+        return $resolved;
+      }
+    }
+
+    // Absolute path
+    if (file_exists($path)) {
+      return $path;
+    }
+
+    // Relative to Drupal root
+    $drupal_root = \Drupal::root();
+    $candidate = $drupal_root . '/' . ltrim($path, '/');
+    if (file_exists($candidate)) {
+      return $candidate;
+    }
+
+    // Filename in the module directory
+    $module_path = \Drupal::service('extension.list.module')->getPath('spip_to_drupal');
+    $candidate = $module_path . '/' . basename($path);
+    if (file_exists($candidate)) {
+      return $candidate;
+    }
+
+    // Also try the full path relative to module
+    $candidate = $module_path . '/' . $path;
+    if (file_exists($candidate)) {
+      return $candidate;
+    }
+
+    return NULL;
+  }
+
+  /**
    * Handles the import action using Drupal Batch API with progress UI.
    */
   public function handleImportBatch(array &$form, FormStateInterface $form_state) {
@@ -351,6 +553,38 @@ class SpipMigrationForm extends FormBase {
     $destination_bundle = $form_state->getValue('destination_bundle') ?: 'article';
     $migration_id = $this->determineMigrationId($form_state, $source_type, $destination_bundle);
 
+    // Handle file upload for local import
+    $file_path = NULL;
+    if ($source_type === 'file') {
+      $file_path = $this->handleFileUpload($form_state, $destination_bundle);
+      if (!$file_path) {
+        $this->messenger->addError($this->t('Please upload an XML file for local import.'));
+        return;
+      }
+    }
+
+    // For local file import, we do a single-batch operation (no pagination)
+    if ($source_type === 'file' && !empty($file_path)) {
+      $operations = [
+        [
+          ['\\Drupal\\spip_to_drupal\\Form\\SpipMigrationForm', 'batchImportLocalFile'],
+          [$migration_id, $file_path, $limit ? (int) $limit : NULL],
+        ],
+      ];
+
+      $batch = [
+        'title' => $this->t('Importing SPIP content from local file'),
+        'operations' => $operations,
+        'finished' => ['\\Drupal\\spip_to_drupal\\Form\\SpipMigrationForm', 'batchImportFinished'],
+        'progress_message' => $this->t('Processing local XML file...'),
+        'error_message' => $this->t('An error occurred during the import.'),
+      ];
+
+      batch_set($batch);
+      return;
+    }
+
+    // URL-based batch import (existing logic)
     // Compute how many items and pages to process.
     $per_page = 20;
     $total_items = 0;
@@ -393,6 +627,50 @@ class SpipMigrationForm extends FormBase {
     ];
 
     batch_set($batch);
+  }
+
+  /**
+   * Batch callback for local file import (single operation, no pagination).
+   */
+  public static function batchImportLocalFile(string $migration_id, string $file_path, ?int $limit, array &$context) {
+    try {
+      /** @var \Drupal\migrate\Plugin\MigrationPluginManagerInterface $manager */
+      $manager = \Drupal::service('plugin.manager.migration');
+      $migration = $manager->createInstance($migration_id);
+
+      if (!$migration) {
+        $context['results']['errors'][] = "Migration $migration_id not found.";
+        return;
+      }
+
+      // Override source configuration to use the uploaded file
+      $source = $migration->getSourceConfiguration();
+      $source['file_path'] = $file_path;
+      $source['url'] = NULL;
+      $source['auto_paginate'] = FALSE;
+      $migration->set('source', $source);
+
+      // Set limit if specified
+      if ($limit && $limit > 0) {
+        $GLOBALS['spip_migration_limit'] = $limit;
+      }
+
+      $executable = new MigrateExecutable($migration, new \Drupal\migrate\MigrateMessage());
+      $result = $executable->import();
+
+      // Clean up
+      if (isset($GLOBALS['spip_migration_limit'])) {
+        unset($GLOBALS['spip_migration_limit']);
+      }
+
+      $context['results']['migration_id'] = $migration_id;
+      $context['results']['status'] = $result;
+      $context['message'] = t('Imported from local file @file', ['@file' => $file_path]);
+    }
+    catch (\Exception $e) {
+      $context['results']['errors'][] = $e->getMessage();
+      \Drupal::logger('spip_to_drupal')->error('Local file import failed: @error', ['@error' => $e->getMessage()]);
+    }
   }
 
   /**
@@ -702,9 +980,12 @@ class SpipMigrationForm extends FormBase {
     
     try {
       $migrations = [
-        'spip_enews_articles' => 'eNews (URL Import)',
-        'spip_enews_articles_local' => 'eNews (File Import)',
-        'spip_rubriques' => 'Rubriques → Activity pages',
+        'spip_enews_articles' => 'eNews Articles (URL)',
+        'spip_enews_articles_local' => 'eNews Articles (Local File)',
+        'spip_rubriques' => 'Rubriques → Activity Pages (URL)',
+        'spip_rubriques_local' => 'Rubriques → Activity Pages (Local File)',
+        'spip_project_pages' => 'Project Pages (URL)',
+        'spip_project_pages_local' => 'Project Pages (Local File)',
       ];
 
       foreach ($migrations as $migration_id => $label) {
@@ -789,9 +1070,13 @@ class SpipMigrationForm extends FormBase {
     if (!empty($selected)) {
       return (string) $selected;
     }
-    // Auto-map bundles to migrations. Preserve existing eNews behavior.
+    // Auto-map bundles to migrations.
+    // When source_type is 'file', use the *_local migration variant.
+    if ($bundle === 'project_page') {
+      return ($source_type === 'file') ? 'spip_project_pages_local' : 'spip_project_pages';
+    }
     if ($bundle === 'activity_page') {
-      return 'spip_rubriques';
+      return ($source_type === 'file') ? 'spip_rubriques_local' : 'spip_rubriques';
     }
     if ($source_type === 'file') {
       return ($bundle === 'page') ? 'spip_enews_pages_local' : 'spip_enews_articles_local';
@@ -848,7 +1133,8 @@ class SpipMigrationForm extends FormBase {
       'spip_enews_articles_local' => ['bundle' => 'article'],
       'spip_enews_pages' => ['bundle' => 'page'],
       'spip_enews_pages_local' => ['bundle' => 'page'],
-      'spip_project_pages' => ['bundle' => 'page'],
+      'spip_project_pages' => ['bundle' => 'project_page'],
+      'spip_rubriques' => ['bundle' => 'activity_page'],
       'spip_articles_pages_auto_paginate' => ['bundle' => 'page'],
     ];
     $bundle = $map[$migration_id]['bundle'] ?? 'article';

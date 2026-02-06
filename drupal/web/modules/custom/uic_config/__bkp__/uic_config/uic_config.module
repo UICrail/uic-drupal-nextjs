@@ -1,0 +1,261 @@
+<?php
+
+/**
+ * @file
+ * Primary module hooks for UIC Configuration module.
+ */
+
+/**
+ * Implements hook_help().
+ */
+function uic_config_help($route_name, \Drupal\Core\Routing\RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    case 'help.page.uic_config':
+      return '<p>' . t('Provides custom content types and configuration for the UIC project.') . '</p>';
+  }
+}
+
+/**
+ * Configure custom fields for Article content type.
+ *
+ * Note: Installation logic now lives in uic_config.install. This helper remains
+ * callable for post-install adjustments (e.g., via update hooks if needed).
+ */
+function uic_config_configure_article_fields() {
+  // Check if article form display exists
+  $form_display = \Drupal::entityTypeManager()
+    ->getStorage('entity_form_display')
+    ->load('node.article.default');
+  
+  if ($form_display) {
+    // Add custom fields to form display only if they don't exist
+    $custom_fields = [
+      'field_subtitle' => [
+        'type' => 'string_textfield',
+        'weight' => 7,
+        'settings' => [
+          'size' => 60,
+          'placeholder' => '',
+        ],
+      ],
+      'field_featured_image' => [
+        'type' => 'media_library_widget',
+        'weight' => 2,
+        'settings' => [
+          'media_types' => [],
+        ],
+      ],
+      'field_header' => [
+        'type' => 'text_textarea',
+        'weight' => 9,
+        'settings' => [
+          'rows' => 5,
+          'placeholder' => '',
+        ],
+      ],
+      'field_footer' => [
+        'type' => 'text_textarea',
+        'weight' => 12,
+        'settings' => [
+          'rows' => 5,
+          'placeholder' => '',
+        ],
+      ],
+      'field_gallery' => [
+        'type' => 'media_library_widget',
+        'weight' => 13,
+        'settings' => [
+          'media_types' => [],
+        ],
+      ],
+      'field_attachments' => [
+        'type' => 'media_library_widget',
+        'weight' => 14,
+        'settings' => [
+          'media_types' => [],
+        ],
+      ],
+      'field_spip_id' => [
+        'type' => 'string_textfield',
+        'weight' => 15,
+        'settings' => [
+          'size' => 60,
+          'placeholder' => '',
+        ],
+      ],
+      'field_spip_url' => [
+        'type' => 'string_textfield',
+        'weight' => 16,
+        'settings' => [
+          'size' => 60,
+          'placeholder' => '',
+        ],
+      ],
+    ];
+
+    $has_changes = FALSE;
+    foreach ($custom_fields as $field_name => $field_config) {
+      // Only add field if it doesn't already exist in the form display
+      if ($form_display->getComponent($field_name) === NULL) {
+        $form_display->setComponent($field_name, $field_config);
+        $has_changes = TRUE;
+      }
+    }
+    
+    if ($has_changes) {
+      $form_display->save();
+    }
+  }
+
+  // Configure custom fields in existing article view display
+  $view_display = \Drupal::entityTypeManager()
+    ->getStorage('entity_view_display')
+    ->load('node.article.default');
+  
+  if ($view_display) {
+    // Hide custom fields by default in view display
+    $hidden_fields = [
+      'field_subtitle',
+      'field_featured_image',
+      'field_header',
+      'field_footer',
+      'field_gallery',
+      'field_attachments',
+      'field_spip_id',
+      'field_spip_url',
+    ];
+
+    $has_changes = FALSE;
+    foreach ($hidden_fields as $field_name) {
+      // Only remove field if it exists in the view display
+      if ($view_display->getComponent($field_name) !== NULL) {
+        $view_display->removeComponent($field_name);
+        $has_changes = TRUE;
+      }
+    }
+    
+    if ($has_changes) {
+      $view_display->save();
+    }
+  }
+}
+
+/**
+ * Configure GraphQL Compose to expose custom fields.
+ */
+function uic_config_configure_graphql_compose() {
+  // Get current GraphQL Compose settings
+  $config = \Drupal::configFactory()->getEditable('graphql_compose.settings');
+  $entity_config = $config->get('entity_config') ?: [];
+  $field_config = $config->get('field_config') ?: [];
+
+  // Ensure node configuration exists
+  if (!isset($entity_config['node'])) {
+    $entity_config['node'] = [];
+  }
+
+  // Configure Article node type (only if not already configured)
+  if (!isset($entity_config['node']['article'])) {
+    $entity_config['node']['article'] = [
+      'enabled' => true,
+      'query_load_enabled' => true,
+      'edges_enabled' => true,
+      'routes_enabled' => true,
+    ];
+  }
+
+  // Configure Project Page node type (only if not already configured)
+  if (!isset($entity_config['node']['project_page'])) {
+    $entity_config['node']['project_page'] = [
+      'enabled' => true,
+      'query_load_enabled' => true,
+      'edges_enabled' => true,
+      'routes_enabled' => true,
+    ];
+  }
+
+  // Ensure field configuration exists
+  if (!isset($field_config['node'])) {
+    $field_config['node'] = [];
+  }
+
+  // Force configure all fields for all content types (ensures featured_image is always enabled)
+  _uic_config_force_graphql_field_config($entity_config, $field_config);
+  $has_changes = TRUE;
+
+  // Save the configuration only if there are changes
+  if ($has_changes) {
+    $config->set('entity_config', $entity_config);
+    $config->set('field_config', $field_config);
+    $config->save();
+
+    // Clear GraphQL schema cache
+    \Drupal::service('cache_tags.invalidator')->invalidateTags(['graphql_compose_schema']);
+  }
+}
+
+/**
+ * Force configure GraphQL fields for all content types.
+ */
+function _uic_config_force_graphql_field_config(array &$entity_config, array &$field_config): void {
+  // Ensure all entity types are configured
+  $entity_config['node'] = $entity_config['node'] ?? [];
+  
+  // Configure entity types
+  $entity_types = ['article', 'activity_page', 'project_page'];
+  foreach ($entity_types as $bundle) {
+    $entity_config['node'][$bundle] = [
+      'enabled' => true,
+      'query_load_enabled' => true,
+      'edges_enabled' => true,
+      'routes_enabled' => true,
+    ];
+  }
+
+  // Ensure field configuration structure
+  $field_config['node'] = $field_config['node'] ?? [];
+  
+  // Configure fields for each content type
+  $content_type_fields = [
+    'article' => [
+      'field_subtitle' => ['enabled' => true],
+      'field_featured_image' => ['enabled' => true],
+      'field_header' => ['enabled' => true],
+      'field_footer' => ['enabled' => true],
+      'field_gallery' => ['enabled' => true],
+      'field_attachments' => ['enabled' => true],
+      'field_tags' => ['enabled' => true], // Default Drupal 10 field
+      'field_spip_id' => ['enabled' => true],
+      'field_spip_url' => ['enabled' => true],
+    ],
+    'activity_page' => [
+      'field_subtitle' => ['enabled' => true],
+      'field_featured_image' => ['enabled' => true],
+      'field_header' => ['enabled' => true],
+      'field_footer' => ['enabled' => true],
+      'field_gallery' => ['enabled' => true],
+      'field_attachments' => ['enabled' => true],
+      'field_spip_id' => ['enabled' => true],
+      'field_spip_url' => ['enabled' => true],
+    ],
+    'project_page' => [
+      'field_subtitle' => ['enabled' => true],
+      'field_featured_image' => ['enabled' => true],
+      'field_header' => ['enabled' => true],
+      'field_footer' => ['enabled' => true],
+      'field_image' => ['enabled' => true],
+      'field_start_end' => ['enabled' => true],
+      'field_spip_id' => ['enabled' => true],
+      'field_spip_url' => ['enabled' => true],
+      'field_tags' => ['enabled' => true],
+    ],
+  ];
+
+  foreach ($content_type_fields as $bundle => $fields) {
+    $field_config['node'][$bundle] = $field_config['node'][$bundle] ?? [];
+    foreach ($fields as $field_name => $field_settings) {
+      // Force enable all fields (overwrite existing config)
+      $field_config['node'][$bundle][$field_name] = $field_settings;
+    }
+  }
+}

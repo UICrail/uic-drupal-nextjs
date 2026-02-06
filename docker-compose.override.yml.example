@@ -1,0 +1,15 @@
+# Copy this file to docker-compose.override.yml for local development overrides
+# docker-compose.override.yml is automatically loaded by docker-compose
+
+version: '3.8'
+
+services:
+  nextjs:
+    build:
+      target: development
+    volumes:
+      - ./next:/app
+      - /app/node_modules
+      - /app/.next
+    command: npm run dev
+

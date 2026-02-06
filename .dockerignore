@@ -1,20 +1,42 @@
-# Ignore file for the Drupal container.
-**/*.md
-**/CHANGELOG*
-**/README*
-**/LICENSE*
-.circleci/*
-phpcs.xml
-**/*.sql
-**/*.gz
-**/*.zip
-web/core/**/tests
-web/modules/contrib/**/tests
-vendor/**/Tests
-**/node_modules
-**/.git
-web/sites/**/files
-web/.dockerignore
-Dockerfile
-composer.lock
-silta/silta*.yml
+# Dependencies
+node_modules
+vendor
+.next
+.git
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Testing
+coverage
+.nyc_output
+cypress/videos
+cypress/screenshots
+
+# Build artifacts
+dist
+build
+
+# Drupal
+drupal/web/sites/default/files
+drupal/private
+
+# Next.js
+next/.next
+next/node_modules

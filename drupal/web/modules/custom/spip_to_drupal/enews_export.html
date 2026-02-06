@@ -6,7 +6,8 @@
 	[(#SET{debut,[(#GET{num_page}|moins{1}|mult{#GET{par_page}})]})]
   
 	<BOUCLE_content(ARTICLES){id_rubrique=7}{#GET{debut},#GET{par_page}}{!par date}>
-		<BOUCLE_firstimg(DOCUMENTS) {id_article}{extension IN png,jpg,gif}{vu=non}{par rang_lien, num titre, date}{0,1}>
+		[(#SET{logourl,[(#LOGO_ARTICLE|extraire_attribut{src})]})]
+		<BOUCLE_firstimg(DOCUMENTS) {id_article}{extension IN png,jpg,gif,svg,webp}{vu=non}{par rang_lien, num titre, date}{0,1}>
 			[(#SET{featured-img,comdoc#ID_DOCUMENT})]
 			[(#SET{featured-img-url,#URL_DOCUMENT})]
 			</BOUCLE_firstimg>
@@ -18,7 +19,7 @@
 				</auteurs>
 				[(#LOGO_ARTICLE|oui)<logo>comlogo#ID_ARTICLE</logo>]
 				[(#LOGO_ARTICLE|non)<logo>#GET{featured-img-url}</logo>]
-				<logourl>#GET{featured-img-url}</logourl>
+				<logourl>[(#GET{logourl}|?{#GET{logourl},#GET{featured-img-url}})]</logourl>
 				<surtitre>#SURTITRE</surtitre>
 				<titre>[(#TITRE|texte_backend)]</titre>
 				<formerurl>#URL_ARTICLE</formerurl>

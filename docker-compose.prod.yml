@@ -1,0 +1,27 @@
+version: '3.8'
+
+# Docker Compose pour la production
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+services:
+  drupal-php:
+    build:
+      context: ./drupal
+      dockerfile: ../docker/drupal/Dockerfile
+    environment:
+      - ENVIRONMENT_NAME=${ENVIRONMENT_NAME:-production}
+    volumes:
+      # En production, on peut monter uniquement les fichiers nécessaires
+      - drupal_files:/var/www/html/web/sites/default/files
+      - drupal_private:/var/www/html/private
+
+  nextjs:
+    build:
+      context: ./next
+      dockerfile: ../docker/next/Dockerfile
+      target: production
+    environment:
+      - NODE_ENV=production
+    # Pas de volumes en production, tout est dans l'image
+    # volumes: []
+

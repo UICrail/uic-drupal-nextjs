@@ -1,12 +1,11 @@
-id: spip_project_pages
-label: '[SPIP] Project Pages Import - Auto-Pagination'
+id: spip_project_pages_local
+label: '[SPIP] Project Pages Import - Local File'
 migration_group: spip_import
 source:
   plugin: spip_xml_file
-  url: 'https://uic.org/?page=project_page_export'
+  file_path: 'public://feeds/project_pages.xml'
   item_selector: '//rubrique'
-  # Enable auto-pagination; no hard cap (fetch until no more items)
-  auto_paginate: true
+  auto_paginate: false
 
 process:
   # Node type
@@ -76,7 +75,6 @@ process:
       documents_index_url: 'https://uic.org/?page=documents_exportxml'
       documents_index_urls:
         - 'https://uic.org/?page=documents_exportxml'
-        - 'https://uic.org/?page=documents_exportxml'
       destination_scheme: 'public://'
       destination_subdir: 'spip/documents'
       reuse_existing: true
@@ -132,14 +130,13 @@ process:
       reuse_existing: true
       allowed_extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg']
 
-  # Intermediate: read tags1 with NULL-safe default (single-plugin, not pipeline)
+  # Intermediate: read tags1 with NULL-safe default
   _tags_raw:
     plugin: default_value
     source: tags1
     default_value: ''
 
   # Tags - split by semicolon and create/reference taxonomy terms
-  # Uses @_tags_raw (temp property above) to avoid pipeline source issues.
   field_tags:
     - plugin: callback
       source: '@_tags_raw'

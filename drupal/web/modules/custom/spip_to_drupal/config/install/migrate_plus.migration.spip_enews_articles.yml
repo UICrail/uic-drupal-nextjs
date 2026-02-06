@@ -13,15 +13,15 @@ process:
   type:
     plugin: default_value
     default_value: article
-  
+
   # Language
   langcode:
     plugin: default_value
     default_value: en
-  
+
   # Title (required field)
   title: titre
-  
+
   # Body field with format
   body/value:
     - plugin: spip_raccourcis_to_html
@@ -57,10 +57,10 @@ process:
   body/format:
     plugin: default_value
     default_value: full_html
-    
+
   # SPIP URL field
   field_spip_url: formerurl
-  
+
   # Subtitle field
   field_subtitle: soustitre
 
@@ -115,10 +115,10 @@ process:
   field_footer/format:
     plugin: default_value
     default_value: full_html
-  
+
   # SPIP ID (unique identifier)
   field_spip_id: id
-    
+
   # Image principale depuis logourl -> Media entity dans field_featured_image
   field_featured_image:
     - plugin: skip_on_empty
@@ -131,17 +131,28 @@ process:
       media_bundle: 'image'
       media_file_field: 'field_media_image'
       reuse_existing: true
-      allowed_extensions: ['jpg','jpeg','png','gif','webp']
+      allowed_extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg']
+
+  # Intermediate: read tags1 with NULL-safe default
+  _tags_raw:
+    plugin: default_value
+    source: tags1
+    default_value: ''
 
   # Tags - split by semicolon and create/reference taxonomy terms
   field_tags:
+    - plugin: callback
+      source: '@_tags_raw'
+      callable: trim
     - plugin: skip_on_empty
-      source: tags1
       method: process
     - plugin: explode
       delimiter: ';'
+      strict: false
     - plugin: callback
       callable: trim
+    - plugin: skip_on_empty
+      method: process
     - plugin: entity_generate
       entity_type: taxonomy_term
       bundle: tags
@@ -164,7 +175,7 @@ process:
       media_bundle: 'image'
       media_file_field: 'field_media_image'
       reuse_existing: true
-      allowed_extensions: ['jpg','jpeg','png','gif','webp']
+      allowed_extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg']
 
   # Attachments from portfolio -> Media Document references
   field_attachments:
@@ -182,7 +193,19 @@ process:
       media_bundle: 'document'
       media_file_field: 'field_media_document'
       reuse_existing: true
-      allowed_extensions: ['pdf','doc','docx','xls','xlsx','ppt','pptx','zip','rtf','txt']
+      allowed_extensions:
+        [
+          'pdf',
+          'doc',
+          'docx',
+          'xls',
+          'xlsx',
+          'ppt',
+          'pptx',
+          'zip',
+          'rtf',
+          'txt',
+        ]
 
 destination:
   plugin: 'entity:node'
@@ -191,4 +214,3 @@ destination:
 migration_dependencies:
   required: []
   optional: []
-

@@ -70,7 +70,8 @@ class SpipHtmlMediaEmbed extends ProcessPluginBase {
 		if (isset($config['allowed_extensions']) && is_string($config['allowed_extensions'])) {
 			$config['allowed_extensions'] = array_filter(array_map('trim', explode(',', $config['allowed_extensions'])));
 		}
-		return $defaults + $config;
+		// $config (from YAML) takes priority over $defaults.
+		return $config + $defaults;
 	}
 
 	/**

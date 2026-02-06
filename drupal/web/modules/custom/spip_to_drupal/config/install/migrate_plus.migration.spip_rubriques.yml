@@ -95,15 +95,24 @@ process:
       media_bundle: 'image'
       media_file_field: 'field_media_image'
       reuse_existing: true
-      allowed_extensions: ['jpg','jpeg','png','gif','webp']
+      allowed_extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg']
+
+  # Intermediate: read group1 with NULL-safe default
+  _tags_raw:
+    plugin: default_value
+    source: group1
+    default_value: ''
 
   # Tags - split by semicolon and create/reference taxonomy terms
   field_tags:
+    - plugin: callback
+      source: '@_tags_raw'
+      callable: trim
     - plugin: skip_on_empty
-      source: group1
       method: process
     - plugin: explode
       delimiter: ';'
+      strict: false
     - plugin: callback
       callable: trim
     - plugin: skip_on_empty
@@ -130,7 +139,7 @@ process:
       media_bundle: 'image'
       media_file_field: 'field_media_image'
       reuse_existing: true
-      allowed_extensions: ['jpg','jpeg','png','gif','webp']
+      allowed_extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg']
 
   # Attachments from <portfolio> -> Media Document references
   field_attachments:
@@ -148,7 +157,19 @@ process:
       media_bundle: 'document'
       media_file_field: 'field_media_document'
       reuse_existing: true
-      allowed_extensions: ['pdf','doc','docx','xls','xlsx','ppt','pptx','zip','rtf','txt']
+      allowed_extensions:
+        [
+          'pdf',
+          'doc',
+          'docx',
+          'xls',
+          'xlsx',
+          'ppt',
+          'pptx',
+          'zip',
+          'rtf',
+          'txt',
+        ]
 
 destination:
   plugin: 'entity:node'
@@ -157,5 +178,3 @@ destination:
 migration_dependencies:
   required: []
   optional: []
-
-

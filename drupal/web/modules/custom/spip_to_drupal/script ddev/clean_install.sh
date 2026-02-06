@@ -20,15 +20,8 @@
 #
 #  Compatible : Debian, Ubuntu, serveur sans DDEV
 #
-#  Note : Ce script tolere le bug PHP Fatal de Consolidation\Log\Logger
-#  qui fait que drush retourne des codes d'erreur meme quand la commande
-#  reussit. On capture stdout dans des variables pour verifier les resultats
-#  au lieu de se fier aux exit codes.
-#
 
-# On n'utilise PAS set -e ni pipefail car drush retourne des codes d'erreur
-# a cause du bug Consolidation\Log\Logger meme quand la commande reussit.
-# pipefail + drush|grep casserait toutes les verifications.
+set -euo pipefail
 
 # ---- Options ----
 RUN_IMPORT=false
@@ -49,12 +42,6 @@ warn() { echo -e "  ${YELLOW}[WARN]${NC}  $1"; }
 err()  { echo -e "  ${RED}[ERR]${NC}   $1"; }
 info() { echo -e "  ${BLUE}[INFO]${NC}  $1"; }
 step() { echo -e "\n${BOLD}=== $1 ===${NC}"; }
-
-# Helper : executer drush et capturer stdout, ignorer stderr (PHP Fatal)
-# Usage : RESULT=$(drush_quiet pm:list --status=enabled)
-drush_quiet() {
-    $DRUSH "$@" 2>/dev/null || true
-}
 
 # ---- Trouver drush ----
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -78,81 +65,62 @@ info "Drupal root : $DRUPAL_ROOT"
 echo ""
 
 # ============================================================
-step "Etape 1/8 : Desinstallation du module"
+step "Etape 1/7 : Desinstallation du module"
 # ============================================================
 
-# Capturer la sortie pour eviter que pipefail/exit code casse la verification
-MODULE_LIST=$(drush_quiet pm:list --status=enabled --type=module)
-if echo "$MODULE_LIST" | grep -q spip_to_drupal; then
+if $DRUSH pm:list --status=enabled --type=module 2>/dev/null | grep -q spip_to_drupal; then
     info "Desinstallation de spip_to_drupal..."
-    drush_quiet pm:uninstall spip_to_drupal -y
+    $DRUSH pm:uninstall spip_to_drupal -y 2>/dev/null || true
     ok "Module desinstalle"
 else
-    # Double-check : tenter quand meme la desinstallation au cas ou
-    info "Module semble deja desinstalle, tentative de desinstallation au cas ou..."
-    drush_quiet pm:uninstall spip_to_drupal -y
-    ok "Desinstallation tentee"
+    ok "Module deja desinstalle"
 fi
 
 # ============================================================
-step "Etape 2/8 : Suppression des configs de migration SPIP"
+step "Etape 2/7 : Suppression des configs de migration SPIP"
 # ============================================================
 
 # Liste de TOUTES les configs connues (actives, backup, anciennes)
 CONFIGS=(
-    # Migrations actuelles (config/install) - URL
+    # Migrations actuelles (config/install)
     "migrate_plus.migration.spip_enews_articles"
     "migrate_plus.migration.spip_project_pages"
     "migrate_plus.migration.spip_rubriques"
-    # Migrations actuelles (config/install) - Local file
-    "migrate_plus.migration.spip_enews_articles_local"
-    "migrate_plus.migration.spip_project_pages_local"
-    "migrate_plus.migration.spip_rubriques_local"
-    # Migration group
     "migrate_plus.migration_group.spip_import"
     # Anciennes migrations (backups / versions precedentes)
+    "migrate_plus.migration.spip_enews_articles_local"
     "migrate_plus.migration.spip_enews_articles_bkp"
     "migrate_plus.migration.spip_enews_articles_auto_paginate"
     "migrate_plus.migration.spip_enews_articles_update"
+    "migrate_plus.migration.spip_project_pages_local"
 )
 
 DELETED=0
 for config in "${CONFIGS[@]}"; do
-    # Toujours tenter la suppression
-    drush_quiet config:delete "$config"
-    DELETED=$((DELETED + 1))
+    if $DRUSH config:get "$config" &>/dev/null; then
+        $DRUSH config:delete "$config" 2>/dev/null || true
+        ok "Supprime : $config"
+        ((DELETED++))
+    fi
 done
 
-# Chercher d'autres configs SPIP orphelines via config:list
-ORPHANS=$(drush_quiet config:list | grep -i spip || true)
+# Chercher d'autres configs SPIP orphelines
+ORPHANS=$($DRUSH config:list 2>/dev/null | grep -i spip || true)
 if [ -n "$ORPHANS" ]; then
     warn "Configs SPIP supplementaires trouvees :"
     while IFS= read -r line; do
         if [ -n "$line" ]; then
-            drush_quiet config:delete "$line"
+            $DRUSH config:delete "$line" 2>/dev/null || true
             ok "Supprime : $line"
-            DELETED=$((DELETED + 1))
+            ((DELETED++))
         fi
     done <<< "$ORPHANS"
 fi
 
-# Deuxieme passe : forcer via SQL si config:delete a echoue silencieusement
-REMAINING=$(drush_quiet config:list | grep -i "spip" || true)
-if [ -n "$REMAINING" ]; then
-    warn "Configs restantes detectees, suppression via SQL..."
-    while IFS= read -r line; do
-        if [ -n "$line" ]; then
-            drush_quiet sql:query "DELETE FROM config WHERE name = '$line'"
-            ok "Supprime (SQL) : $line"
-            DELETED=$((DELETED + 1))
-        fi
-    done <<< "$REMAINING"
-fi
-
-info "$DELETED config(s) traitee(s)"
+info "$DELETED config(s) supprimee(s) au total"
 
 # ============================================================
-step "Etape 3/8 : Nettoyage des tables de migration en base"
+step "Etape 3/7 : Nettoyage des tables de migration en base"
 # ============================================================
 
 # Les tables migrate_map_* et migrate_message_* persistent apres desinstallation
@@ -173,96 +141,53 @@ TABLES=(
     "migrate_message_spip_project_pages_local"
     "migrate_map_spip_rubriques"
     "migrate_message_spip_rubriques"
-    "migrate_map_spip_rubriques_local"
-    "migrate_message_spip_rubriques_local"
 )
 
 TABLES_DROPPED=0
 for table in "${TABLES[@]}"; do
-    TABLE_EXISTS=$(drush_quiet sql:query "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = '$table'" | tr -d '[:space:]')
-    if [ "$TABLE_EXISTS" = "1" ]; then
-        drush_quiet sql:query "DROP TABLE IF EXISTS $table"
+    if $DRUSH sql:query "SELECT 1 FROM information_schema.tables WHERE table_name = '$table' LIMIT 1" 2>/dev/null | grep -q 1; then
+        $DRUSH sql:query "DROP TABLE IF EXISTS $table" 2>/dev/null || true
         ok "Table supprimee : $table"
-        TABLES_DROPPED=$((TABLES_DROPPED + 1))
+        ((TABLES_DROPPED++))
     fi
 done
 
 info "$TABLES_DROPPED table(s) de migration supprimee(s)"
 
 # ============================================================
-step "Etape 4/8 : Nettoyage du cache"
+step "Etape 4/7 : Nettoyage du cache"
 # ============================================================
 
-drush_quiet cr
+$DRUSH cr 2>/dev/null
 ok "Cache Drupal vide"
 
 # ============================================================
-step "Etape 5/8 : Reinstallation du module"
+step "Etape 5/7 : Reinstallation du module"
 # ============================================================
 
 info "Activation de spip_to_drupal et dependances..."
-ENABLE_OUT=$(drush_quiet pm:enable spip_to_drupal migrate migrate_plus migrate_tools -y)
-echo "$ENABLE_OUT" | head -5
+$DRUSH pm:enable spip_to_drupal migrate migrate_plus migrate_tools -y 2>&1
 ok "Module installe"
 
-drush_quiet cr
+$DRUSH cr 2>/dev/null
 ok "Cache vide apres installation"
 
 # ============================================================
-step "Etape 6/8 : Execution des update hooks (uic_config)"
-# ============================================================
-
-info "Execution de drush updb pour appliquer les nouveaux champs (field_gallery, field_attachments sur project_page)..."
-UPDB_OUT=$(drush_quiet updb -y)
-echo "$UPDB_OUT" | head -20
-ok "Update hooks executes"
-
-drush_quiet cr
-ok "Cache vide apres update hooks"
-
-# Verification rapide que les champs existent
-for field in field_gallery field_attachments; do
-    EXISTS=$(drush_quiet php:eval "
-use Drupal\field\Entity\FieldConfig;
-echo FieldConfig::loadByName('node', 'project_page', '$field') ? 'yes' : 'no';
-" | tr -d '[:space:]')
-    if [ "$EXISTS" = "yes" ]; then
-        ok "Champ $field existe sur project_page"
-    else
-        warn "Champ $field : verification incertaine (resultat='$EXISTS')"
-        warn "  Les champs existent probablement - le PHP Fatal error fausse la verification."
-    fi
-done
-
-# ============================================================
-step "Etape 7/8 : Verification"
+step "Etape 6/7 : Verification"
 # ============================================================
 
 # Module actif ?
-MODULE_LIST2=$(drush_quiet pm:list --status=enabled --type=module)
-if echo "$MODULE_LIST2" | grep -q spip_to_drupal; then
+if $DRUSH pm:list --status=enabled --type=module 2>/dev/null | grep -q spip_to_drupal; then
     ok "Module spip_to_drupal actif"
 else
-    warn "Verification du module incertaine (PHP Fatal peut fausser le resultat)"
-    info "Tentative de re-activation..."
-    drush_quiet pm:enable spip_to_drupal -y
-    drush_quiet cr
-    # Re-verifier
-    MODULE_LIST3=$(drush_quiet pm:list --status=enabled --type=module)
-    if echo "$MODULE_LIST3" | grep -q spip_to_drupal; then
-        ok "Module spip_to_drupal actif (apres re-activation)"
-    else
-        err "Impossible de verifier l'etat du module."
-        err "Verifiez manuellement : drush pm:list --status=enabled | grep spip"
-        info "On continue quand meme..."
-    fi
+    err "Module spip_to_drupal NON actif !"
+    exit 1
 fi
 
 # Configs chargees ?
 MIGRATIONS_OK=true
-for mid in spip_enews_articles spip_project_pages spip_rubriques spip_enews_articles_local spip_project_pages_local spip_rubriques_local; do
-    CFG_CHECK=$(drush_quiet config:get "migrate_plus.migration.$mid" id)
-    if echo "$CFG_CHECK" | grep -q "$mid"; then
+for mid in spip_enews_articles spip_project_pages spip_rubriques; do
+    if $DRUSH config:get "migrate_plus.migration.$mid" id &>/dev/null; then
         ok "Config chargee : $mid"
     else
         err "Config MANQUANTE : $mid"
@@ -270,8 +195,7 @@ for mid in spip_enews_articles spip_project_pages spip_rubriques spip_enews_arti
     fi
 done
 
-CFG_GROUP=$(drush_quiet config:get migrate_plus.migration_group.spip_import id)
-if echo "$CFG_GROUP" | grep -q "spip_import"; then
+if $DRUSH config:get migrate_plus.migration_group.spip_import id &>/dev/null; then
     ok "Config chargee : spip_import (group)"
 else
     err "Config MANQUANTE : spip_import (group)"
@@ -279,8 +203,8 @@ else
 fi
 
 # Valeurs corrigees pour project_pages ?
-PP_TYPE=$(drush_quiet config:get migrate_plus.migration.spip_project_pages process.type.default_value)
-PP_BUNDLE=$(drush_quiet config:get migrate_plus.migration.spip_project_pages destination.default_bundle)
+PP_TYPE=$($DRUSH config:get migrate_plus.migration.spip_project_pages process.type.default_value 2>/dev/null || echo "?")
+PP_BUNDLE=$($DRUSH config:get migrate_plus.migration.spip_project_pages destination.default_bundle 2>/dev/null || echo "?")
 
 if echo "$PP_TYPE" | grep -q "project_page"; then
     ok "spip_project_pages type = project_page"
@@ -298,24 +222,24 @@ fi
 
 # Types de contenu cibles ?
 for bundle in article activity_page project_page; do
-    EXISTS=$(drush_quiet php:eval "
+    EXISTS=$($DRUSH php:eval "
 use Drupal\node\Entity\NodeType;
 echo NodeType::load('$bundle') ? 'yes' : 'no';
-" | tr -d '[:space:]')
+" 2>/dev/null || echo "no")
     if [ "$EXISTS" = "yes" ]; then
         ok "Type de contenu : $bundle"
     else
-        warn "Type de contenu $bundle : verification incertaine (resultat='$EXISTS')"
+        warn "Type de contenu MANQUANT : $bundle (verifiez uic_config)"
     fi
 done
 
 # Statut des migrations
 echo ""
 info "Statut des migrations :"
-drush_quiet migrate:status --group=spip_import || true
+$DRUSH migrate:status --group=spip_import 2>/dev/null || warn "Impossible d'afficher le statut"
 
 # ============================================================
-step "Etape 8/8 : Import des contenus"
+step "Etape 7/7 : Import des contenus"
 # ============================================================
 
 if [ "$RUN_IMPORT" = true ]; then
@@ -323,21 +247,21 @@ if [ "$RUN_IMPORT" = true ]; then
 
     echo ""
     info "--- spip_enews_articles (Articles) ---"
-    $DRUSH migrate:import spip_enews_articles 2>&1 || true
+    $DRUSH migrate:import spip_enews_articles 2>&1 || warn "Migration articles terminee avec warnings"
 
     echo ""
     info "--- spip_rubriques (Activity Pages) ---"
-    $DRUSH migrate:import spip_rubriques 2>&1 || true
+    $DRUSH migrate:import spip_rubriques 2>&1 || warn "Migration rubriques terminee avec warnings"
 
     echo ""
     info "--- spip_project_pages (Project Pages) ---"
-    $DRUSH migrate:import spip_project_pages 2>&1 || true
+    $DRUSH migrate:import spip_project_pages 2>&1 || warn "Migration project pages terminee avec warnings"
 
     echo ""
     info "Resume des contenus migres :"
     for bundle in article activity_page project_page; do
-        COUNT=$(drush_quiet sql:query "SELECT COUNT(*) FROM node_field_data WHERE type = '$bundle'" | tr -d '[:space:]')
-        info "  $bundle : ${COUNT:-?} node(s)"
+        COUNT=$($DRUSH sql:query "SELECT COUNT(*) FROM node_field_data WHERE type = '$bundle'" 2>/dev/null || echo "?")
+        info "  $bundle : $COUNT node(s)"
     done
 else
     info "Import non demande. Pour importer :"

@@ -52,6 +52,13 @@ class XmlFile extends SourcePluginBase
         // Get configuration
         $file_path = $this->configuration['file_path'] ?? null;
         $url = $this->configuration['url'] ?? null;
+
+        // Allow runtime override of file_path from form upload
+        if (isset($GLOBALS['spip_migration_file_path']) && !empty($GLOBALS['spip_migration_file_path'])) {
+            $file_path = $GLOBALS['spip_migration_file_path'];
+            $url = null; // Force file mode when file path is provided via global
+            \Drupal::logger('spip_to_drupal')->info('Using uploaded file path: @path', ['@path' => $file_path]);
+        }
         $this->itemSelector = $this->configuration['item_selector'] ?? '//rubrique';
         $page = $this->configuration['page'] ?? 1;
         $per_page = $this->configuration['per_page'] ?? 20;
@@ -233,16 +240,51 @@ class XmlFile extends SourcePluginBase
         }
         // Fallback to file path
         elseif ($file_path) {
-            // Convert stream wrapper to real path
-            $real_path = \Drupal::service('file_system')->realpath($file_path);
+            // Resolve the file path: support stream wrappers (public://), absolute paths, and relative paths
+            $real_path = null;
 
-            if (!file_exists($real_path)) {
-                throw new \Exception("XML file not found: $file_path");
+            // Try stream wrapper first
+            if (strpos($file_path, '://') !== false) {
+                $resolved = \Drupal::service('file_system')->realpath($file_path);
+                if ($resolved && file_exists($resolved)) {
+                    $real_path = $resolved;
+                }
+            }
+
+            // Try as absolute path
+            if (!$real_path && file_exists($file_path)) {
+                $real_path = $file_path;
+            }
+
+            // Try relative to Drupal root
+            if (!$real_path) {
+                $drupal_root = \Drupal::root();
+                $candidate = $drupal_root . '/' . ltrim($file_path, '/');
+                if (file_exists($candidate)) {
+                    $real_path = $candidate;
+                }
+            }
+
+            // Try relative to modules directory (useful for files placed next to the module)
+            if (!$real_path) {
+                $module_path = \Drupal::service('extension.list.module')->getPath('spip_to_drupal');
+                $candidate = $module_path . '/' . basename($file_path);
+                if (file_exists($candidate)) {
+                    $real_path = $candidate;
+                    \Drupal::logger('spip_to_drupal')->info('Found XML file in module directory: @path', ['@path' => $candidate]);
+                }
+            }
+
+            if (!$real_path) {
+                throw new \Exception("XML file not found: $file_path (tried stream wrapper, absolute, Drupal root relative, and module directory)");
             }
 
             // Load XML file
             $xml_content = file_get_contents($real_path);
-            \Drupal::logger('spip_to_drupal')->info('Successfully loaded XML from file: @file', ['@file' => $file_path]);
+            \Drupal::logger('spip_to_drupal')->info('Successfully loaded XML from file: @file (resolved to @real)', [
+                '@file' => $file_path,
+                '@real' => $real_path,
+            ]);
         }
         else {
             throw new \Exception("Neither 'url' nor 'file_path' configuration provided");
@@ -586,6 +628,29 @@ class XmlFile extends SourcePluginBase
             $max_items = $this->configuration['max_items'] ?? null;
             if ($max_items && $max_items > 0) {
                 return $max_items;
+            }
+
+            // For file-based migrations, check if the file exists before trying to count.
+            // This avoids noisy warnings when the file hasn't been uploaded yet.
+            $file_path = $this->configuration['file_path'] ?? null;
+            $url = $this->configuration['url'] ?? null;
+            if ($file_path && empty($url)) {
+                // Don't override with GLOBALS here - just check if the configured file exists
+                $check_path = $file_path;
+                if (isset($GLOBALS['spip_migration_file_path']) && !empty($GLOBALS['spip_migration_file_path'])) {
+                    $check_path = $GLOBALS['spip_migration_file_path'];
+                }
+                $exists = false;
+                if (strpos($check_path, '://') !== false) {
+                    $resolved = \Drupal::service('file_system')->realpath($check_path);
+                    $exists = $resolved && file_exists($resolved);
+                } else {
+                    $exists = file_exists($check_path);
+                }
+                if (!$exists) {
+                    // File not yet uploaded - return 0 silently
+                    return 0;
+                }
             }
             
             // Otherwise, count all items (original behavior)
