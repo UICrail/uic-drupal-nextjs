@@ -8,16 +8,34 @@ source:
   auto_paginate: false
 
 process:
+  # Lookup existing node by field_spip_id to enable updates instead of duplicates
+  _existing_nid:
+    - plugin: entity_lookup
+      source: id
+      entity_type: node
+      bundle: article
+      bundle_key: type
+      value_key: field_spip_id
+      ignore_case: true
+  
+  # Set nid if existing node found (enables update)
+  nid:
+    - plugin: skip_on_empty
+      source: '@_existing_nid'
+      method: process
+    - plugin: get
+      source: '@_existing_nid'
+
   # Node type
   type:
     plugin: default_value
     default_value: article
-
+  
   # Language
   langcode:
     plugin: default_value
     default_value: en
-
+  
   # Title (required field)
   title: titre
 
