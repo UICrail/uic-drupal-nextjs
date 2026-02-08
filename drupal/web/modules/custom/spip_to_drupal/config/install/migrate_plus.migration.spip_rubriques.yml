@@ -43,6 +43,18 @@ process:
   # SPIP ID (unique identifier)
   field_spip_id: id
 
+  # Parent Activity Page (hierarchy via parentid -> field_parent)
+  field_parent:
+    - plugin: skip_on_empty
+      source: parentid
+      method: process
+    - plugin: entity_lookup
+      entity_type: node
+      bundle: activity_page
+      bundle_key: type
+      value_key: field_spip_id
+      ignore_case: true
+
   # Subtitle field
   field_subtitle: soustitre
 

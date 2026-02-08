@@ -1,0 +1,17 @@
+======================================================================
+DATE TAGS & MEMBERS ADDITION SCRIPT
+======================================================================
+Input file:  /home/aymeri_b/uic-drupal-nextjs/drupal/web/modules/custom/spip_to_drupal/project_page.xml
+Output file: /home/aymeri_b/uic-drupal-nextjs/drupal/web/modules/custom/spip_to_drupal/project_page_with_dates.xml
+======================================================================
+
+✓ File read successfully: 734740 bytes
+Processing projects...
+----------------------------------------------------------------------
+----------------------------------------------------------------------
+✓ File written successfully: 738635 bytes
+
+======================================================================
+✓ Total projects processed: 56
+✓ Output written to: /home/aymeri_b/uic-drupal-nextjs/drupal/web/modules/custom/spip_to_drupal/project_page_with_dates.xml
+======================================================================

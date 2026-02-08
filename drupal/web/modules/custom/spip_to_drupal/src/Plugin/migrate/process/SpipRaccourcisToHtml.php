@@ -155,6 +155,12 @@ class SpipRaccourcisToHtml extends ProcessPluginBase {
   /**
    * Convert SPIP list syntax to HTML with proper nesting.
    *
+   * Handles:
+   * - -* or -# for level 1 (unordered/ordered)
+   * - -** or -## for level 2
+   * - -*** or -### for level 3, etc.
+   * - Space after marker is optional: "-*item" and "-* item" both work
+   *
    * @param string $text
    *   The text to process.
    *
@@ -165,14 +171,15 @@ class SpipRaccourcisToHtml extends ProcessPluginBase {
     $lines = explode("\n", $text);
     $out = [];
     $stack = []; // Stack of open list types and levels: [['type' => 'ul', 'level' => 1], ...]
+    $pending_li_close = FALSE; // Track if we need to close a <li> before nesting or same-level item
 
     foreach ($lines as $line) {
       // Match list items: -* (ul), -** (ul nested), -# (ol), -## (ol nested), etc.
-      // Also handle simple - as ul level 1
-      if (preg_match('/^(\s*)-(\*+|\#+)\s+(.*)$/u', $line, $m)) {
+      // Space after marker is optional (\s* instead of \s+)
+      if (preg_match('/^(\s*)-(\*+|\#+)\s*(.*)$/u', $line, $m)) {
         $indent = $m[1];
         $marker = $m[2];
-        $content = $m[3];
+        $content = trim($m[3]);
         
         // Determine list type and level
         $is_ordered = ($marker[0] === '#');
@@ -183,50 +190,68 @@ class SpipRaccourcisToHtml extends ProcessPluginBase {
         while (!empty($stack) && end($stack)['level'] > $level) {
           $closed = array_pop($stack);
           $out[] = '</' . $closed['type'] . '>';
-          $out[] = '</li>';
+          $out[] = '</li>'; // Close the parent li that contained this nested list
+          $pending_li_close = FALSE;
         }
 
-        // If same level but different type, close and reopen
+        // If same level but different type, close current list and its parent li
         if (!empty($stack) && end($stack)['level'] === $level && end($stack)['type'] !== $list_type) {
           $closed = array_pop($stack);
           $out[] = '</' . $closed['type'] . '>';
+          if ($pending_li_close) {
+            $out[] = '</li>';
+            $pending_li_close = FALSE;
+          }
+        }
+
+        // At same level: close previous <li> before adding new item
+        if (!empty($stack) && end($stack)['level'] === $level && $pending_li_close) {
           $out[] = '</li>';
+          $pending_li_close = FALSE;
         }
 
         // Open new lists as needed to reach current level
         while (empty($stack) || end($stack)['level'] < $level) {
           $new_level = empty($stack) ? 1 : end($stack)['level'] + 1;
-          
-          // If we're nesting, we need to NOT close the previous li
-          if (!empty($stack) && $new_level > 1) {
-            // Remove the </li> from the previous item if it was added
-            $last_idx = count($out) - 1;
-            if ($last_idx >= 0 && $out[$last_idx] === '</li>') {
-              array_pop($out);
-            }
-          }
-          
           $out[] = '<' . $list_type . '>';
           $stack[] = ['type' => $list_type, 'level' => $new_level];
         }
 
-        // Add the list item
-        $out[] = '<li>' . $content . '</li>';
+        // Add the list item (don't close it yet - might have nested content)
+        $out[] = '<li>' . $content;
+        $pending_li_close = TRUE;
         continue;
       }
 
       // Not a list item - close all open lists
-      while (!empty($stack)) {
-        $closed = array_pop($stack);
-        $out[] = '</' . $closed['type'] . '>';
+      if (!empty($stack)) {
+        if ($pending_li_close) {
+          $out[] = '</li>';
+          $pending_li_close = FALSE;
+        }
+        while (!empty($stack)) {
+          $closed = array_pop($stack);
+          $out[] = '</' . $closed['type'] . '>';
+          // If there's still a parent list, close its li too
+          if (!empty($stack)) {
+            $out[] = '</li>';
+          }
+        }
       }
       $out[] = $line;
     }
 
     // Close any remaining open lists
+    if ($pending_li_close) {
+      $out[] = '</li>';
+    }
     while (!empty($stack)) {
       $closed = array_pop($stack);
       $out[] = '</' . $closed['type'] . '>';
+      // If there's still a parent list after this one, close its li
+      if (!empty($stack)) {
+        $out[] = '</li>';
+      }
     }
 
     return implode("\n", $out);

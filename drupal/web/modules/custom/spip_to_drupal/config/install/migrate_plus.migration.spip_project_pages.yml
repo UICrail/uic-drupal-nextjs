@@ -136,6 +136,24 @@ process:
   # SPIP ID (unique identifier)
   field_spip_id: id
 
+  # Date range field (start and end dates)
+  # Source format: DD/MM/YYYY -> Drupal format: Y-m-d
+  field_start_end/value:
+    - plugin: skip_on_empty
+      source: start
+      method: process
+    - plugin: format_date
+      from_format: 'd/m/Y'
+      to_format: 'Y-m-d'
+
+  field_start_end/end_value:
+    - plugin: skip_on_empty
+      source: end
+      method: process
+    - plugin: format_date
+      from_format: 'd/m/Y'
+      to_format: 'Y-m-d'
+
   # Image principale depuis logourl -> Media entity dans field_featured_image
   field_featured_image:
     - plugin: skip_on_empty
@@ -222,6 +240,29 @@ process:
           'rtf',
           'txt',
         ]
+
+  # Companies list from <members> (comma-separated company codes)
+  # Lookup Company nodes by field_company_code
+  field_companies_list:
+    - plugin: skip_on_empty
+      source: members
+      method: process
+    - plugin: callback
+      callable: trim
+    - plugin: explode
+      delimiter: ','
+      strict: false
+    - plugin: callback
+      callable: trim
+    - plugin: callback
+      callable: intval
+    - plugin: skip_on_empty
+      method: process
+    - plugin: entity_lookup
+      entity_type: node
+      bundle: company
+      bundle_key: type
+      value_key: field_company_code
 
 destination:
   plugin: 'entity:node'

@@ -1,5 +1,40 @@
 #CACHE{0}[(#HTTP_HEADER{Content-type: text/xml[; charset=(#CHARSET)]})]<?xml version="1.0"[ encoding="(#CHARSET)"]?>
-<!DOCTYPE rubriques>
+<!DOCTYPE rubriques [
+	<!ENTITY ndash "&#8211;">
+	<!ENTITY mdash "&#8212;">
+	<!ENTITY lsquo "&#8216;">
+	<!ENTITY rsquo "&#8217;">
+	<!ENTITY ldquo "&#8220;">
+	<!ENTITY rdquo "&#8221;">
+	<!ENTITY hellip "&#8230;">
+	<!ENTITY nbsp "&#160;">
+	<!ENTITY copy "&#169;">
+	<!ENTITY reg "&#174;">
+	<!ENTITY trade "&#8482;">
+	<!ENTITY euro "&#8364;">
+	<!ENTITY pound "&#163;">
+	<!ENTITY yen "&#165;">
+	<!ENTITY deg "&#176;">
+	<!ENTITY plusmn "&#177;">
+	<!ENTITY frac12 "&#189;">
+	<!ENTITY frac14 "&#188;">
+	<!ENTITY frac34 "&#190;">
+	<!ENTITY times "&#215;">
+	<!ENTITY divide "&#247;">
+	<!ENTITY bull "&#8226;">
+	<!ENTITY rarr "&#8594;">
+	<!ENTITY larr "&#8592;">
+	<!ENTITY uarr "&#8593;">
+	<!ENTITY darr "&#8595;">
+	<!ENTITY laquo "&#171;">
+	<!ENTITY raquo "&#187;">
+	<!ENTITY acute "&#180;">
+	<!ENTITY cedil "&#184;">
+	<!ENTITY sect "&#167;">
+	<!ENTITY para "&#182;">
+	<!ENTITY middot "&#183;">
+	<!ENTITY amp "&#38;">
+]>
 <rubriques xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink">
 	[(#SET{num_page,[(#ENV{num_page}|intval|?{[(#ENV{num_page}|intval)],1})]})]
 	[(#SET{par_page,[(#ENV{par_page}|intval|?{[(#ENV{par_page}|intval)],10})]})]
@@ -8,6 +43,9 @@
 	<BOUCLE_rub(RUBRIQUES){id_secteur IN 99}>
 		#SET{rubrique_id,#ID_RUBRIQUE}
 		<BOUCLE_content(ARTICLES){id_rubrique}{#GET{debut},#GET{par_page}}{!par date}>
+			[(#SET{logourl,''})]
+			[(#SET{featured-img,''})]
+			[(#SET{featured-img-url,''})]
 			[(#SET{logourl,[(#LOGO_ARTICLE|extraire_attribut{src})]})]
 			<BOUCLE_firstimg(DOCUMENTS) {id_article}{extension IN png,jpg,gif,svg,webp}{vu=non}{par rang_lien, num titre, date}{0,1}>
 			[(#SET{featured-img,doc#ID_DOCUMENT})]
@@ -22,28 +60,26 @@
 				[(#LOGO_ARTICLE|oui)<logo>logo#ID_ARTICLE</logo>]
 				[(#LOGO_ARTICLE|non)<logo>#GET{featured-img-url}</logo>]
 				<logourl>[(#GET{logourl}|?{#GET{logourl},#GET{featured-img-url}})]</logourl>
-				<surtitre>#SURTITRE</surtitre>
-				<titre>#TITRE</titre>
+				<surtitre><![CDATA[#SURTITRE*]]></surtitre>
+				<titre><![CDATA[#TITRE*]]></titre>
 				<formerurl>#URL_ARTICLE</formerurl>
-				<soustitre>#SOUSTITRE</soustitre>
+				<soustitre><![CDATA[#SOUSTITRE*]]></soustitre>
 				<pub>#DATE</pub>
 				<chapo><![CDATA[#CHAPO*]]></chapo>
 				<texte><![CDATA[#TEXTE*]]></texte>
 				<group1>
-					<BOUCLE_keywords(MOTS) {id_article}{id_groupe IN 3,13}>[(#TITRE_MOT|extraire_multi{'en'}|trim);]
+					<BOUCLE_keywords(MOTS) {id_article}{id_groupe IN 3,13}>[(#TITRE_MOT|extraire_multi{'en'}|trim|texte_backend);]
 						</BOUCLE_keywords>
 				</group1>
 				<tags1>
-					<BOUCLE_keywords1(MOTS) {id_article}{id_groupe IN 7}>[(#TITRE_MOT|extraire_multi{'en'}|trim);]
+					<BOUCLE_keywords1(MOTS) {id_article}{id_groupe IN 7}>[(#TITRE_MOT|extraire_multi{'en'}|trim|texte_backend);]
 						</BOUCLE_keywords1>
 				</tags1>
 				<themes>
 					<BOUCLE_keywords2(MOTS) {id_article}{id_groupe IN 3,13}>[(#ID_MOT);]</BOUCLE_keywords2>
 				</themes>
-				<ps>
-					<![CDATA[[#PS*]]]>
-				</ps>
-				<note>#NOTES</note>
+				<ps><![CDATA[#PS*]]></ps>
+				<note><![CDATA[#NOTES*]]></note>
 				<visits>#VISITES</visits>
 				<images>
 					<BOUCLE_docs1(DOCUMENTS){id_article}{doublons}{media=image}>comdoc#ID_DOCUMENT;</BOUCLE_docs1>

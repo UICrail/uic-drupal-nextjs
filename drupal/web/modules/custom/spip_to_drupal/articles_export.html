@@ -35,35 +35,43 @@
 	<!ENTITY middot "&#183;">
 	<!ENTITY amp "&#38;">
 ]>
-<rubriques xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink">
+<articles xmlns="http://docbook.org/ns/docbook" version="5.0" xmlns:xlink="http://www.w3.org/1999/xlink">
 	[(#SET{num_page,[(#ENV{num_page}|intval|?{[(#ENV{num_page}|intval)],1})]})]
 	[(#SET{par_page,[(#ENV{par_page}|intval|?{[(#ENV{par_page}|intval)],10})]})]
 	[(#SET{debut,[(#GET{num_page}|moins{1}|mult{#GET{par_page}})]})]
 
-	<BOUCLE_rub(RUBRIQUES){id_secteur IN 145, 13, 157, 30, 42, 26, 48, 22, 8, 5 } {#GET{debut},#GET{par_page}} {par id_rubrique}>
+	<BOUCLE_content(ARTICLES){id_secteur IN 145, 13, 157, 30, 42, 26, 48, 22, 8, 5}{#GET{debut},#GET{par_page}}{par id_article}>
 		[(#SET{logourl,''})]
-		<BOUCLE_rublogo(RUBRIQUES){id_rubrique}>
-			[(#SET{logourl,[(#LOGO_RUBRIQUE|extraire_attribut{src})]})]
-		</BOUCLE_rublogo>
-		<rubrique xml:id="#ID_RUBRIQUE">
-			<id>rub#ID_RUBRIQUE</id>
-			<parentid>rub#ID_PARENT</parentid>
-			<auteurs></auteurs>
-			<logo></logo>
+		[(#SET{featured-img,''})]
+		[(#SET{featured-img-url,''})]
+		<BOUCLE_artlogo(ARTICLES){id_article}>
+			[(#SET{logourl,[(#LOGO_ARTICLE|extraire_attribut{src})]})]
+		</BOUCLE_artlogo>
+		<article xml:id="art#ID_ARTICLE">
+			<id>art#ID_ARTICLE</id>
+			<parentid>rub#ID_RUBRIQUE</parentid>
+			<auteurs><BOUCLE_auteurs(AUTEURS){id_article}>[(#EMAIL|extraire_email)];</BOUCLE_auteurs></auteurs>
+			<logo>[(#LOGO_ARTICLE|oui)logo#ID_ARTICLE]</logo>
 			<logourl>#GET{logourl}</logourl>
+			<surtitre><![CDATA[#SURTITRE*]]></surtitre>
 			<titre><![CDATA[#TITRE*]]></titre>
+			<formerurl>[(#URL_ARTICLE|replace{'/',''})]</formerurl>
 			<soustitre><![CDATA[#SOUSTITRE*]]></soustitre>
 			<pub>#DATE</pub>
-			<desc><![CDATA[#DESCRIPTIF*]]></desc>
+			<chapo><![CDATA[#CHAPO*]]></chapo>
 			<texte><![CDATA[#TEXTE*]]></texte>
-			<group1><BOUCLE_keywords(MOTS) {id_rubrique}{id_groupe=1}>[(#TITRE_MOT|extraire_multi{'en'}|trim|texte_backend);]</BOUCLE_keywords></group1>
-			<themes><BOUCLE_keywords2(MOTS) {id_rubrique}{id_groupe=1}>[(#ID_MOT);]</BOUCLE_keywords2></themes>
+			<group1><BOUCLE_keywords(MOTS){id_article}{id_groupe=1}>[(#TITRE_MOT|extraire_multi{'en'}|trim|texte_backend);]</BOUCLE_keywords></group1>
+			<tags1><BOUCLE_tags(MOTS){id_article}{id_groupe=1}>[(#TITRE_MOT|extraire_multi{'en'}|trim|texte_backend);]</BOUCLE_tags></tags1>
+			<themes><BOUCLE_keywords2(MOTS){id_article}{id_groupe=1}>[(#ID_MOT);]</BOUCLE_keywords2></themes>
+			<ps><![CDATA[#PS*]]></ps>
+			<note><![CDATA[#NOTES*]]></note>
+			<visits>#VISITES</visits>
 			<images>
-				<BOUCLE_docs1(DOCUMENTS){id_article}{doublons}{media=image}>doc#ID_DOCUMENT;</BOUCLE_docs1>
+				<BOUCLE_imgs(DOCUMENTS){id_article}{doublons}{extension IN jpg,jpeg,png,gif,webp,svg}>doc#ID_DOCUMENT;</BOUCLE_imgs>
 			</images>
 			<portfolio>
 				<BOUCLE_docs(DOCUMENTS){id_article}{mode=document}{doublons}>doc#ID_DOCUMENT;</BOUCLE_docs>
 			</portfolio>
-		</rubrique>
-	</BOUCLE_rub>
-</rubriques>
+		</article>
+	</BOUCLE_content>
+</articles>
